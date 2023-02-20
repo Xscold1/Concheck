@@ -1,24 +1,23 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const companySchema = new Schema({
-    companyName: {
+const imageSchema = new Schema({
+    imageName: {
         type: String,
         required: true
     },
-     address: {
+    caption: {
         type: String,
         required: true
      },
-    contactNumber: {
+    date: {
         type: Number,
         required: true
     },
-    userId:{
-        type: Number,
-        ref: 'User',
+    projectId: {
+        type:Number,
+        ref: 'projects'
     }
-
 })
 
-module.exports = Company = mongoose.model('company', companySchema);
+module.exports = Image = mongoose.model('image', imageSchema);

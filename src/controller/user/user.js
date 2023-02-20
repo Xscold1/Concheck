@@ -6,64 +6,67 @@ const conn = mongoose.connection;
 
 //models
 const User = require('../../models/user');
-const Engineer = require('../../models/Engineer');
+const Engineer = require('../../models/company');
+const Company = require('../../models/company');
+const Crew = require('../../models/crew');
 
 
-const REGISTER = async (req, res) => {
-    const session = await conn.startSession();
-    try {
-        session.startTransaction();
-        const {firstName, lastName, email, password, age, roleId, licenseNumber, address,} = req.body;
-        //check if email already exists
-        const checkSameEmail = await User.findOne({email: email}).exec();
+// const REGISTER_USER = async (req, res) => {
+//     const session = await conn.startSession();
+//     try {
+//         session.startTransaction();
 
-        if(checkSameEmail){
-            return res.send({
-                status: "success",
-                statusCode: 200,
-                message: "Email already exists",
-            });
-        }
-        const registerUser = await User.create([{email: email, password: password, roleId: roleId, }], { session })
+//         const {firstName, lastName, email, password, age, roleId, licenseNumber, address,} = req.body;
+//         //check if email already exists
+//         const checkSameEmail = await User.findOne({email: email}).exec();
 
-        if(!registerUser){
-            return res.send({
-                status: "Failed",
-                statusCode: 400,
-                response:{
-                    message: "Something went wrong"
-                }
-            })
-        };
-        let result = registerUser.map(a => a._id)
-        const registerEngineer = await Engineer.create([{firstName: firstName, lastName: lastName, age: age, address: address, licenseNumber: licenseNumber, userId: result[0]}], { session })
+//         if(checkSameEmail){
+//             return res.send({
+//                 status: "success",
+//                 statusCode: 200,
+//                 message: "Email already exists",
+//             });
+//         }
+//         const registerUser = await User.create([{email: email, password: password, roleId: roleId, }], { session })
 
-        if(!registerEngineer){
-            return res.send({
-                status: "Failed",
-                statusCode: 400,
-                response:{
-                    message: "Something went wrong"
-                }
-            })
-        };
+//         if(!registerUser){
+//             return res.send({
+//                 status: "Failed",
+//                 statusCode: 400,
+//                 response:{
+//                     message: "Something went wrong"
+//                 }
+//             })
+//         };
+//         let result = registerUser.map(a => a._id)
+//         const registerEngineer = await Engineer.create([{firstName: firstName, lastName: lastName, age: age, address: address, licenseNumber: licenseNumber, userId: result[0]}], { session })
 
-        res.send({
-            status: "success",
-            statusCode: 200,
-            message: "Successfully registered",
-        })
-        await session.commitTransaction();
-    } catch (err) {
-        res.send({
-            status: "INTERNAL SERVER ERROR",
-            statusCode:500,
-            message: err.message,
-        })
-        await session.abortTransaction();
-    }
-    session.endSession();
-}
+//         if(!registerEngineer){
+//             return res.send({
+//                 status: "Failed",
+//                 statusCode: 400,
+//                 response:{
+//                     message: "Something went wrong"
+//                 }
+//             })
+//         };
+
+//         res.send({
+//             status: "success",
+//             statusCode: 200,
+//             message: "Successfully registered",
+//         })
+//         await session.commitTransaction();
+//     } catch (err) {
+//         res.send({
+//             status: "INTERNAL SERVER ERROR",
+//             statusCode:500,
+//             message: err.message,
+//         })
+//         await session.abortTransaction();
+//     }
+//     session.endSession();
+// }
 const LOGIN = async (req, res) => {
     try {
         const {email, password} = req.body
@@ -78,7 +81,17 @@ const LOGIN = async (req, res) => {
                 }
             })
         }
-        const getUser = await Engineer.findOne({userId: checkEmail.id}).exec()
+        if(checkEmail.roleId === "2"){
+            const loginAsCompany = await Company.findOne({userId: checkEmail.id}).exec()
+
+        }else if(checkEmail.roleId === "3"){
+
+            const getEngineer = await Engineer.findOne({userId: checkEmail.id}).exec()
+
+        }else if (checkEmail.roleId === "4"){
+
+
+        }
         
         if(password !== checkEmail.password){
             return res.send({
@@ -110,7 +123,9 @@ const LOGIN = async (req, res) => {
                 statusCode: 200,
                 response:{
                     message: "Successfully Login as Project Owner",
-                    data:""
+                    data:{
+
+                    }
                 }
             })
         }
@@ -202,9 +217,18 @@ const DELETE_USER = async (req, res) => {
     }
 }
 
+
+const LOGOUT = async (req, res)=>{
+    try {
+        
+    } catch (err) {
+        
+    }
+}
 module.exports = {
-    REGISTER,
+    //REGISTER_USER,
     LOGIN,
     DELETE_USER,
+    LOGOUT
 
 }

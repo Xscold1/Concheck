@@ -4,9 +4,7 @@ const Schema = mongoose.Schema;
 const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const projectSchema = new Schema({
-    _id:{
-        type:Number,
-    },
+
     image:{
         type:String,
         required:true,
@@ -14,13 +12,14 @@ const projectSchema = new Schema({
     projectName:{
         type:String,
         required:true,
+        unique:true,
     },
     startDate:{
-        type:Number,
+        type:Date,
         required:true,
     },
     endDate:{
-        type:Number,
+        type:Date,
         required:true,
     },
     projectEngineer:{
@@ -47,8 +46,7 @@ const projectSchema = new Schema({
         type:Number,
         required:true,
     },
-}, { _id: false })
+})
 
-projectSchema.plugin(AutoIncrement, { id : 'project_id_counter' , inc_field: '_id'})
 
 module.exports = project = mongoose.model('project', projectSchema);
