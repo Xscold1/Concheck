@@ -1,6 +1,7 @@
 //utils
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
+const cloudinary = require('../../utils/cloudinary')
 
 //models 
 const User = require('../../models/user')
@@ -129,9 +130,21 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
     try {
         session.startTransaction()
 
+        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+
+        const registerUser = {
+            email: req.body.email,
+            password: req.body.password,
+            roleId: req.body.roleId
+        }
+
+        const registerCompany = {
+            companyName: req.body.companyName,
+            address: req.body.address,
+            contactNumber: req.body.contactNumber
+        }
         
-        const {companyName, email, password, roleId, address, contactNumber} = req.body
-        const checkEmailIfExist = await User.findOne({email: email}).exec()
+        const checkEmailIfExist = await User.findOne({email:registerUser.email}).exec()
 
         if(checkEmailIfExist) {
             return res.send({
@@ -143,9 +156,9 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
             })
         }
 
-        const hashPassword = bcrypt.hashSync(password, saltRounds)
+        const hashPassword = bcrypt.hashSync(registerUser.password, saltRounds)
 
-        const createUser = await User.create([{email: email, password: hashPassword, roleId: roleId}], {session})
+        const createUser = await User.create([{email:registerUser.email, password:hashPassword, roleId: registerUser.roleId}], {session})
 
         if(!createUser){
             return res.send({
@@ -156,9 +169,14 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
                 }
             })
         }
+
         let id = createUser.map(a => a._id)
-        console.log(id)
-        const createCompany = await Company.create([{companyName: companyName, address: address, contactNumber: contactNumber, userId: id[0]}], {session})
+
+        const createCompany = await Company.create([{
+           ...registerCompany,
+           userId: id[0],
+           imageUrl: uploadImage.url
+        }], {session})
         
         if(!createCompany){
             return res.send({
@@ -241,9 +259,28 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
-        const{companyName, email, password, address, contactNumber, _id } = req.body
+        const updateUser = {
+            _id: req.body._id,
+            email: req.body.email,
+            password: req.body.password,
+            roleId: req.body.roleId
+        }
+
+        const registerCompany = {
+            companyName: req.body.companyName,
+            address: req.body.address,
+            contactNumber: req.body.contactNumber
+        }
         
-        const updateCompanyUserAccount = await User.findByIdAndUpdate(_id, {email: email, password: password}, {session}).exec()
+        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        const hashPassword = bcrypt.hashSync(updateUser.password, saltRounds)
+
+        const updateCompanyUserAccount = await User.findByIdAndUpdate(updateUser._id, [{$set: {
+            email:updateUser.email, 
+            password:hashPassword, 
+            roleId: updateUser.roleId, 
+
+        }}], {session}).exec()
         
         if(!updateCompanyUserAccount){
             return res.send({
@@ -255,7 +292,12 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
             })
         }
 
-        const updateCompanyAccount = await Company.findOneAndUpdate({userId: updateCompanyUserAccount._id},[{$set: {companyName:companyName, address:address, contactNumber:contactNumber}}], {session}).exec()
+        const updateCompanyAccount = await Company.findOneAndUpdate({
+            userId: updateCompanyUserAccount._id
+            },[{$set: {
+                ...registerCompany,
+                imageUrl: uploadImage.url,
+            }}], {session}).exec()
 
         if(!updateCompanyAccount){
             return res.send({

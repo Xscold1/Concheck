@@ -5,7 +5,6 @@ const jwtSecret = "SECRET";
 module.exports = function (req, res, next) {
 
   try {
-    // console.log('req.headers', req.headers)
     const bearerToken = req.headers.authorization;
     if(!bearerToken){
       throw { statusCode: 500, message: "No token, authorization denied" };

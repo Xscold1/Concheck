@@ -21,7 +21,7 @@ const engineer = require("./src/routes/engineer/engineer");
 const admin = require("./src/routes/admin/admin");
 const project = require("./src/routes/project/project");
 const crew = require("./src/routes/crew/crew");
-
+const company = require("./src/routes/company/company");
 
 // routes and controllers
 app.use("/api/user", user);
@@ -29,7 +29,7 @@ app.use("/api/admin", admin);
 app.use("/api/engineer", engineer);
 app.use("/api/crew", crew);
 app.use("/api/project", project);
-
+app.use("/api/company", company);
 
 const PORT = process.env.PORT || 4000;
 

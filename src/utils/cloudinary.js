@@ -1,10 +1,12 @@
 const cloudinary = require('cloudinary').v2
-const streamifier = require('streamifier')
+//const streamifier = require('streamifier')
+
+require('dotenv').config();
 
 cloudinary.config({ 
-    cloud_name: 'diwlgnbqc', 
-    api_key: '548794665558367', 
-    api_secret: 'HFivTHAE97dsdc-KOy6snt95tj4' 
+    cloud_name: process.env.CLOUD_NAME, 
+    api_key: process.env.API_KEY, 
+    api_secret: process.env.API_SECRET 
   });
 
 module.exports = cloudinary

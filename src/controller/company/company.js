@@ -2,8 +2,19 @@
 const Engineer = require('../../models/engineer');
 const Company = require('../../models/company');
 const User = require('../../models/user');
+
 //utils
+const cloudinary = require('../../utils/cloudinary')
+
+//import
+const mongoose = require('mongoose');
 const conn = mongoose.connection;
+
+
+//global variables
+const bcrypt = require('bcrypt');
+const saltRounds = 10
+
 
 const ADD_ENGINEER_ACCOUNT = async (req, res) => {
 
@@ -13,9 +24,22 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
 
         session.startTransaction();
 
-        const {firstName, lastName, email, password, roleId, licenseNumber, address} = req.body;
+        
+        const userAccountInput = {
+            email: req.body.email,
+            password: req.body.password,
+            roleId: req.body.roleId
+        } 
 
-        const checkEmailIfExists = await User.findOne({email: email}).exec();
+        const engineerAccountInput = {
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            licenseNumber: req.body.licenseNumber,
+            address: req.body.address
+        }
+
+        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        const checkEmailIfExists = await User.findOne({email: userAccountInput.email}).exec();
         
         if(checkEmailIfExists) {
             return res.send({
@@ -27,8 +51,13 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             })
         }
 
+        const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
 
-        const registerUser = await User.create([{email: email, password: password, roleId: roleId, }], { session }).exec()
+        const registerUser = await User.create([{
+            email: userAccountInput.email, 
+            password: hashPassword, 
+            roleId: userAccountInput.roleId, 
+        }], { session })
 
         if(!registerUser){
             return res.send({
@@ -42,7 +71,11 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
 
         let result = registerUser.map(a => a._id)
 
-        const registerEngineer = await Engineer.create([{firstName: firstName, lastName: lastName, age: age, address: address, licenseNumber: licenseNumber, userId: result[0]}], { session })
+        const registerEngineer = await Engineer.create([{
+            ...engineerAccountInput,
+            imageUrl: uploadImage.url, 
+            userId: result[0]
+        }], { session })
 
         if(!registerEngineer){
             return res.send({
@@ -84,10 +117,10 @@ const GET_ALL_ENGINEER_ACCOUNT = async (req, res)=>{
 
         if (!fetchAllEngineerData) {
             return res.send({
-                status:"FAILED",
-                statusCode:400,
+                status:"SUCCESS",
+                statusCode:200,
                 response:{
-                    message:"Failed to get all accounts"
+                    message:"There is no Engineer account yet"
                 }
             })
         }
@@ -114,19 +147,30 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
-        const{firstName, email, password, lastName, address, _id, licenseNumber, } = req.body
-        
-        if(!_id){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Id cannot be undefined"
-                }
-            })
-        }
 
-        const updateEngineerUserAccount = await User.findByIdAndUpdate(_id, {email: email, password: password}, {session}).exec()
+        const userAccountInput = {
+            _id: req.body._id,
+            email: req.body.email,
+            password: req.body.password,
+            roleId: req.body.roleId
+        } 
+
+        const engineerAccountInput = {
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            licenseNumber: req.body.licenseNumber,
+            address: req.body.address
+        }
+        
+        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+
+        const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
+
+        const updateEngineerUserAccount = await User.findByIdAndUpdate(userAccountInput._id, [{
+            $set:{
+                email: userAccountInput.email, 
+                password: hashPassword
+            }}], {session}).exec()
         
         if(!updateEngineerUserAccount){
             return res.send({
@@ -138,10 +182,15 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             })
         }
 
-        const updateEngineerAccount = await Engineer.findOneAndUpdate({userId: updateEngineerUserAccount._id},[{$set: {firstName:firstName, lastName: lastName, address:address, licenseNumber:licenseNumber}}], {session}).exec()
+        const updateEngineerAccount = await Engineer.findOneAndUpdate({
+            userId: updateEngineerUserAccount._id
+            },[{$set: {
+                ...engineerAccountInput,
+                imageUrl: uploadImage.url
+            }}], {session}).exec()
 
 
-        if(!updateCompanyAccount){
+        if(!updateEngineerAccount){
             return res.send({
                 status:"FAILED",
                 statusCode:400,

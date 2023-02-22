@@ -5,9 +5,9 @@ const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const projectSchema = new Schema({
 
-    image:{
-        type:String,
-        required:true,
+    imageUrl: {
+        type: String,
+        required: true,
     },
     projectName:{
         type:String,
@@ -46,6 +46,9 @@ const projectSchema = new Schema({
         type:Number,
         required:true,
     },
+    projectEngineerId:{
+        type: mongoose.Schema.Types.ObjectId
+    }
 })
 
 

@@ -1,8 +1,11 @@
-const { required } = require('joi');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const crewSchema = new Schema({
+
+    imageUrl: {
+        type: String,
+    },
 
     firstName:{
         type: String,
@@ -46,7 +49,7 @@ const crewSchema = new Schema({
 
     userId:{
         type: Number,
-        ref: 'users',
+        ref: 'User',
     }
 })
 

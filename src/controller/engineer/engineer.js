@@ -1,5 +1,5 @@
 
-//utils
+//import
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 //const status = require('../constant/statusCode');
@@ -9,12 +9,28 @@ const User = require('../../models/user');
 const Engineer = require('../../models/engineer');
 const Project = require('../../models/project');
 
+//utils
+const cloudinary = require('../../utils/cloudinary')
+
 
 const CREATE_PROJECT = async (req, res) => {
     try {
-        const {image , projectName, startDate, endDate, projectEngineer, siteEngineer, safetyOfficer, projectCode, status, budget} = req.body;
+        
+        const createProjectInfo = {
+            projectName:req.body.projectName,
+            startDate:req.body.startDate,
+            endDate:req.body.endDate,
+            projectEngineer:req.body.projectEngineer,
+            siteEngineer:req.body.siteEngineer,
+            safetyOfficer:req.body.safetyOfficer,
+            projectCode:req.body.projectCode,
+            status:req.body.status, 
+            budget:req.body.budget,
+            projectEngineerId: req.body._id
+        }
 
-        const checkProjecifExist = await Project.findOne({projectNaem: projectName});
+        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        const checkProjecifExist = await Project.findOne({projectName: createProjectInfo.projectName});
 
         if(checkProjecifExist){
             return res.send({
@@ -26,7 +42,10 @@ const CREATE_PROJECT = async (req, res) => {
             })
         }
 
-        const createProject = await Project.create({image: image, projectName: projectName, startDate: startDate, endDate: endDate, projectEngineer: projectEngineer, siteEngineer: siteEngineer, safetyOfficer: safetyOfficer, projectCode: projectCode, status:status, budget:budget})
+        const createProject = await Project.create({
+            ...createProjectInfo,
+            imageUrl: uploadImage.url
+            })
 
         if(!createProject){
             return res.send({
@@ -60,7 +79,8 @@ const CREATE_PROJECT = async (req, res) => {
 const GET_ALL_PROJECT = async (req, res) => {
     try {
         const {projectEngineer} = req.body
-        const fetchAllProject = await Project.find({projectEngineer: projectEngineer})
+
+        const fetchAllProject = await Project.find({projectEngineer: projectEngineer}).exec()
 
         if(!fetchAllProject){
             return res.send({
@@ -95,9 +115,26 @@ const GET_ALL_PROJECT = async (req, res) => {
 
 const EDIT_PROJECT = async (req, res) => {
     try {
-        const {image , projectName, startDate, endDate, projectEngineer, siteEngineer, safetyOfficer, projectCode, status, budget, _id} = req.body;
+        const createProjectInfo = {
+            _id:req.body._id,
+            projectName:req.body.projectName,
+            startDate:req.body.startDate,
+            endDate:req.body.endDate,
+            projectEngineer:req.body.projectEngineer,
+            siteEngineer:req.body.siteEngineer,
+            safetyOfficer:req.body.safetyOfficer,
+            projectCode:req.body.projectCode,
+            status:req.body.status, 
+            budget:req.body.budget,
+            projectEngineerId: req.body._id
+        }
 
-        const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {$set:{image:image,projectName:projectName, startDate:startDate, endDate:endDate,budget:budget, status:status, projectEngineer:projectEngineer, siteEngineer:siteEngineer, siteEngineer:siteEngineer, safetyOfficer:safetyOfficer, projectCode:projectCode}})
+        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        const findAndUpdateProject = await Project.findByIdAndUpdate(createProjectInfo._id, {
+            $set:{
+                ...createProjectInfo,
+                imageUrl:uploadImage.Url
+            }})
 
         if(!findAndUpdateProject){
             return res.send({

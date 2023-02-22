@@ -2,13 +2,14 @@
 //utils
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
-// const status = require('../../constants/statusCode');
+const bcrypt = require('bcrypt');
 
 //models
 const Project = require('../../models/project');
 const Crew = require('../../models/crew');
 const User = require('../../models/user');
-
+//global variables
+const saltRounds = 10
 
 const ADD_TASK = async (req, res) => {
     try {
@@ -45,8 +46,11 @@ const DAILY_REPORT = async (req,res)=>{
 const ADD_CREW_ACCOUNT = async (req, res) => {
     const session = await conn.startSession()
     try {
+
         session.startTransaction()
+
         const {email , password , rate, startShift, endShift, roleId} = req.body
+
         const checkEmailIfExists = await User.findOne({email:email})
         if(checkEmailIfExists){
             return res.send({
@@ -59,10 +63,11 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
         }
 
         
+        const hashPassword = bcrypt.hashSync(password, saltRounds)
 
         const createCrewUserAccount = await User.create([{
             email:email, 
-            password:password, 
+            password:hashPassword, 
             roleId:roleId
         }], {session})
 
