@@ -71,7 +71,6 @@ const LOGIN = async (req, res) => {
         }else if(checkEmail.roleId === "3"){
             const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail._id  }).populate('userId').exec()
             const token = tokenization.generateToken({_id:Engineer._id, roleId:checkEmail.roleId, firstName: fetchEngineerInfo.firstName, EngineerId: fetchEngineerInfo._id})
-
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
