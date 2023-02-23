@@ -184,9 +184,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
 
         const userAccountInput = {
             _id: req.body._id,
-            email: req.body.email,
             password: req.body.password,
-            roleId: req.body.roleId
         } 
 
         const engineerAccountInput = {

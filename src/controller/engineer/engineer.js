@@ -15,7 +15,6 @@ const cloudinary = require('../../utils/cloudinary')
 
 const CREATE_PROJECT = async (req, res) => {
     try {
-        
         const createProjectInfo = {
             projectName:req.body.projectName,
             startDate:req.body.startDate,
