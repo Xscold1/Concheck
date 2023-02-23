@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 
 //models
+const Project = require('../../models/project');
 const Image = require('../../models/image');
 const Crew = require('../../models/crew');
 const User = require('../../models/user');
@@ -129,6 +130,41 @@ const UPLOAD_IMAGE = async (req,res)=>{
             }
         })
 
+    } catch (err) {
+        res.send({
+            status:"Internal Server Error",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
+    }
+}
+
+const GET_PROJECT_BY_ID = async (req, res) => {
+    try {
+        const {_id} = req.params
+
+        const fetchProjectDetails = await Project.findById(_id)
+
+        if(!fetchProjectDetails) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Project not found"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Fetch Successfully",
+                data:fetchProjectDetails
+            }
+        })
     } catch (err) {
         res.send({
             status:"Internal Server Error",
@@ -296,11 +332,45 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
     session.endSession
 }
 
+const GET_ALL_CREW = async (req, res) => {
+    try {
+        const fetchAllCrew = await Crew.find({roleId:"4"}).populate('userId').exec()
+
+        if(!fetchAllCrew){
+            return res.send({
+                status:"SUCCESS",
+                statusCode:200,
+                response:{
+                    message:"No task Found"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully fetched all tasks",
+                data: fetchAllCrew
+            }
+        })
+    } catch (err) {
+        res.send({
+            status:"Internal Server Error",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
+    }
+}
 module.exports = {
     ADD_TASK,
     ADD_CREW_ACCOUNT,
     ADD_DAILY_REPORT,
     UPLOAD_IMAGE,
     GET_ALL_TASK,
-    FIND_IMAGE_AND_UPDATE_CAPTION
+    FIND_IMAGE_AND_UPDATE_CAPTION,
+    GET_PROJECT_BY_ID,
+    GET_ALL_CREW
 }
