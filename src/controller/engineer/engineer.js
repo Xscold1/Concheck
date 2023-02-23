@@ -122,6 +122,7 @@ const EDIT_PROJECT = async (req, res) => {
         }
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        
         const findAndUpdateProject = await Project.findByIdAndUpdate(createProjectInfo._id, {
             $set:{
                 ...createProjectInfo,
