@@ -61,7 +61,20 @@ const ADD_TASK = async (req, res) => {
 
 const GET_ALL_TASK = async (req, res)=>{
     try {
-        const fetchAlltask = await Task.find()
+        const {_id} = req.params
+
+        const fetchAlltask = await Task.find({projectId: _id})
+        
+        
+        if(fetchAlltask.length === 0){
+            return res.send({
+                status:"SUCCESS",
+                statusCode:200,
+                response:{
+                    message:"No task Found"
+                }
+            })
+        }
 
         if(!fetchAlltask){
             return res.send({
