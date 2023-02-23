@@ -116,16 +116,11 @@ const EDIT_PROJECT = async (req, res) => {
     try {
         const createProjectInfo = {
             _id:req.body._id,
-            projectName:req.body.projectName,
-            startDate:req.body.startDate,
-            endDate:req.body.endDate,
-            projectEngineer:req.body.projectEngineer,
             siteEngineer:req.body.siteEngineer,
             safetyOfficer:req.body.safetyOfficer,
             projectCode:req.body.projectCode,
             status:req.body.status, 
             budget:req.body.budget,
-            projectEngineerId: req.body._id
         }
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
