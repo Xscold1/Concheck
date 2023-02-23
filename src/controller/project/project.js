@@ -3,6 +3,7 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
+const fs = require('fs');
 
 //models
 const Image = require('../../models/image');
@@ -94,8 +95,15 @@ const UPLOAD_IMAGE = async (req,res)=>{
     try {
         const {_id}= req.params
 
+        const url = []
+        const files = req.files
 
-        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        for(const file of files){
+            const {path} = file;
+            const newPath = await uploader (path)
+            url.push(newPath)
+            fs.unlinkSync(path)
+        }
 
         const addMultipleImage = await Image.create({
             projectId:_id,

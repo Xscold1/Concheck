@@ -96,9 +96,8 @@ const GET_ALL_PROJECT = async (req, res) => {
             statusCode:200,
             response:{
                 message:"SUCCESS",
-                data:{
-                    fetchAllProject
-                }
+                data:fetchAllProject
+                
             }
         })
     } catch (err) {

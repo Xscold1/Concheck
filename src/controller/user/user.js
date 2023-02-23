@@ -38,7 +38,7 @@ const LOGIN = async (req, res) => {
                 }
             })
         }
-        const token = tokenization.generateToken({_id:checkEmail._id, roleId:checkEmail.roleId, firstName: checkEmail.firstName})
+        
 
         if(checkEmail.roleId === "1"){
 
@@ -57,6 +57,7 @@ const LOGIN = async (req, res) => {
         }else if(checkEmail.roleId === "2"){
 
             const fetchCompanyInfo = await Company.findOne({userId:checkEmail._id }).populate('userId').exec()
+            const token = tokenization.generateToken({_id:checkEmail._id, roleId:checkEmail.roleId, firstName: fetchCompanyInfo.firstName})
             
             return res.send({
                 status:"SUCCESS",
@@ -69,6 +70,7 @@ const LOGIN = async (req, res) => {
 
         }else if(checkEmail.roleId === "3"){
             const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail._id  }).populate('userId').exec()
+            const token = tokenization.generateToken({_id:checkEmail._id, roleId:checkEmail.roleId, firstName: fetchEngineerInfo.firstName})
 
             return res.send({
                 status:"SUCCESS",
@@ -81,6 +83,7 @@ const LOGIN = async (req, res) => {
 
         }else if (checkEmail.roleId === "4"){
             const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  }).populate('userId').exec()
+            const token = tokenization.generateToken({_id:checkEmail._id, roleId:checkEmail.roleId, firstName: fetchCrewInfo.firstName})
 
             return res.send({
                 status:"SUCCESS",
