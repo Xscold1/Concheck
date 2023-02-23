@@ -98,6 +98,8 @@ const UPLOAD_IMAGE = async (req,res)=>{
         const url = []
         const files = req.files
 
+        const uploader = async (path)  => await cloudinary.uploads(path, 'Images')
+
         for(const file of files){
             const {path} = file;
             const newPath = await uploader (path)
@@ -107,7 +109,6 @@ const UPLOAD_IMAGE = async (req,res)=>{
 
         const addMultipleImage = await Image.create({
             projectId:_id,
-            imageUrl:uploadImage.url
         })
 
         if(!addMultipleImage) {
@@ -127,6 +128,7 @@ const UPLOAD_IMAGE = async (req,res)=>{
                 message:"Image successfully uploaded"
             }
         })
+
     } catch (err) {
         res.send({
             status:"Internal Server Error",
@@ -173,7 +175,6 @@ const FIND_IMAGE_AND_UPDATE_CAPTION = async (req,res) => {
         })
     }
 }
-
 
 const ADD_DAILY_REPORT = async (req,res)=>{
     try {

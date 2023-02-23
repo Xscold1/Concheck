@@ -77,8 +77,8 @@ const CREATE_PROJECT = async (req, res) => {
 
 const GET_ALL_PROJECT = async (req, res) => {
     try {
-        const {projectEngineer} = req.body
-
+        const {projectEngineer} = req.params
+        console.log(projectEngineer)
         const fetchAllProject = await Project.find({projectEngineer: projectEngineer}).exec()
 
         if(!fetchAllProject){
@@ -97,7 +97,6 @@ const GET_ALL_PROJECT = async (req, res) => {
             response:{
                 message:"SUCCESS",
                 data:fetchAllProject
-                
             }
         })
     } catch (err) {

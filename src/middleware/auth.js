@@ -14,9 +14,9 @@ module.exports = function (req, res, next) {
     if (!token) {
       throw { statusCode: 500, message: "No token, authorization denied" };
     }
-
+    
     const decoded = jwt.verify(token, jwtSecret);
-
+    
     req.authPayload = decoded;
     next();
   } catch (error) {
