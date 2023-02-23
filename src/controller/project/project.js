@@ -101,15 +101,15 @@ const UPLOAD_IMAGE = async (req,res)=>{
     }
 }
 
-const DAILY_REPORT = async (req,res)=>{
+const ADD_DAILY_REPORT = async (req,res)=>{
     try {
-        const {remarks, weatherReport, causeOfDelay, hoursOfDelay, _id} = req.body
+        const {remarks, weatherReport, causeOfDelay, hoursDelay, _id} = req.body
 
         const insertDailyReport = await DailyReport.create({
             remarks:remarks,
             weatherReport:weatherReport,
             causeOfDelay:causeOfDelay,
-            hoursOfDelay:hoursOfDelay,
+            hoursDelay:hoursDelay,
             projectId: _id,
 
         })
@@ -132,7 +132,7 @@ const DAILY_REPORT = async (req,res)=>{
             }
         })
 
-    } catch (error) {
+    } catch (err) {
         res.send({
             status:"Internal Server Error",
             statusCode:500,
@@ -224,7 +224,7 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
 module.exports = {
     ADD_TASK,
     ADD_CREW_ACCOUNT,
-    DAILY_REPORT,
+    ADD_DAILY_REPORT,
     UPLOAD_IMAGE,
     GET_ALL_TASK
 }

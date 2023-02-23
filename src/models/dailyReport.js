@@ -10,8 +10,8 @@ const dailyReportSchema = new Schema({
         type: String,
         required: true
      },
-    delay: {
-        type: Number,
+    causeOfDelay: {
+        type: String,
         required: true
     },
     hoursDelay:{
