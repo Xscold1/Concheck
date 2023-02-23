@@ -1,15 +1,18 @@
 
-//utils
+//import
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
 
 //models
-const Project = require('../../models/project');
+const Image = require('../../models/image');
 const Crew = require('../../models/crew');
 const User = require('../../models/user');
 const Task = require('../../models/task');
 const DailyReport = require('../../models/dailyReport');
+
+//utils
+const cloudinary = require('../../utils/cloudinary')
 
 //global variables
 const saltRounds = 10
@@ -89,7 +92,33 @@ const GET_ALL_TASK = async (req, res)=>{
 
 const UPLOAD_IMAGE = async (req,res)=>{
     try {
-        
+        const {_id}= req.params
+
+
+        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+
+        const addMultipleImage = await Image.create({
+            projectId:_id,
+            imageUrl:uploadImage.url
+        })
+
+        if(!addMultipleImage) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to upload image"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Image successfully uploaded"
+            }
+        })
     } catch (err) {
         res.send({
             status:"Internal Server Error",
@@ -100,6 +129,43 @@ const UPLOAD_IMAGE = async (req,res)=>{
         })
     }
 }
+
+const FIND_IMAGE_AND_UPDATE_CAPTION = async (req,res) => {
+    try {
+        const {_id} = req.params
+        const {caption} = req.body
+
+        const findImageAndUpdate = await Image.findByIdAndUpdatey(_id, {caption:caption, date: Date.now()})
+        
+        if(!findImageAndUpdate){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to update Image"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successsfully updated image",
+                data:findImageAndUpdate
+            }
+        })
+    } catch (err) {
+        res.send({
+            status:"Internal Server Error",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
+    }
+}
+
 
 const ADD_DAILY_REPORT = async (req,res)=>{
     try {
@@ -226,5 +292,6 @@ module.exports = {
     ADD_CREW_ACCOUNT,
     ADD_DAILY_REPORT,
     UPLOAD_IMAGE,
-    GET_ALL_TASK
+    GET_ALL_TASK,
+    FIND_IMAGE_AND_UPDATE_CAPTION
 }

@@ -160,9 +160,35 @@ const COMPUTE_SALARY = async (req, res) => {
     }
 }
 
+const GET_CREW_BY_ID = async (req, res) => {
+    try {
+        const {_id} = req.params
+
+        const fetchCrewDetails = await Crew.findById(_id).populate('userId')
+
+        res.send({
+            status: "SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully fetch data",
+                data: fetchCrewDetails
+            }
+        })
+        
+    } catch (err) {
+        return res.send({
+            status: "INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                messsage: err.message
+            }
+        })
+    }
+}
 module.exports = {
     UPDATE_CREW_ACCOUNT_DETAILS,
     TIMEIN,
     TIMEOUT,
-    COMPUTE_SALARY
+    COMPUTE_SALARY,
+    GET_CREW_BY_ID
 }

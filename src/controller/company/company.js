@@ -37,7 +37,7 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             address: req.body.address
         }
 
-        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        const uploadImage = await cloudinary.uploader.upload(req.files.path)
         const checkEmailIfExists = await User.findOne({email: userAccountInput.email}).exec();
         
         if(checkEmailIfExists) {

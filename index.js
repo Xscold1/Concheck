@@ -5,9 +5,14 @@ const app = express();
 const mongoose = require('mongoose');
 require('dotenv').config();
 const connectDb = require ('./src/Config/database');
+const bodyParser = require('body-parser');
 
 // Connect to the database
 connectDb();
+
+//bodyParser.use(bodyParser.
+app.use(bodyParser.urlencoded({ extended:false }));
+app.use(bodyParser.json());
 
 //Middlewares
 app.use(express.json());
