@@ -143,6 +143,40 @@ const GET_ALL_ENGINEER_ACCOUNT = async (req, res)=>{
     }
 }
 
+const GET_ENGINEER_ACCOUNT_BY_ID = async (req,res) => {
+    try {
+        const {_id} = req.params
+        const findEngineerAccount = await Engineer.find({userId:_id}).populate('userId')
+
+        if(!findEngineerAccount) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to find admin account"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Fetch Successfully",
+                data:findEngineerAccount
+            }
+        })
+    } catch (err) {
+        return res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:err.message,
+            }
+        })
+    }
+}
+
 const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
     const session = await conn.startSession()
     try {
@@ -226,5 +260,6 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
 module.exports = {
     ADD_ENGINEER_ACCOUNT,
     EDIT_ENGINEER_ACCOUNT,
-    GET_ALL_ENGINEER_ACCOUNT
+    GET_ALL_ENGINEER_ACCOUNT,
+    GET_ENGINEER_ACCOUNT_BY_ID
 }

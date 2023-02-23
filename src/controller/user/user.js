@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const conn = mongoose.connection;
 //const status = require('../constant/statusCode');
 const bcrypt = require('bcrypt');
+const tokenization = require('../../utils/token');
 
 //models
 const User = require('../../models/user');
@@ -26,7 +27,7 @@ const LOGIN = async (req, res) => {
                 }
             })
         }
-        const checkPassowrd = await bcrypt.compareSync(password, checkEmail.password)
+        const checkPassowrd = bcrypt.compareSync(password, checkEmail.password)
 
         if(!checkPassowrd){
             return res.send({
@@ -37,16 +38,24 @@ const LOGIN = async (req, res) => {
                 }
             })
         }
+        const token = tokenization.generateToken({_id:checkEmail._id, roleId:checkEmail.roleId, firstName: checkEmail.firstName})
+
         if(checkEmail.roleId === "1"){
+
+            const adminToken = tokenization.generateToken({_id:checkEmail._id, roleId:checkEmail.roleId})
+
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
                 response:{
                     message: "Successfully log in as admin",
-                    data: checkEmail
+                    data: adminToken,
+                    
                 }
             })
+
         }else if(checkEmail.roleId === "2"){
+
             const fetchCompanyInfo = await Company.findOne({userId:checkEmail._id }).populate('userId').exec()
             
             return res.send({
@@ -54,7 +63,7 @@ const LOGIN = async (req, res) => {
                 statusCode:200,
                 response:{
                     message: "Successfully log in as company",
-                    data: fetchCompanyInfo
+                    data:token
                 }
             })
 
@@ -66,18 +75,19 @@ const LOGIN = async (req, res) => {
                 statusCode:200,
                 response:{
                     message: "Successfully log in as engineer",
-                    data: fetchEngineerInfo
+                    data: token
                 }
             })
 
         }else if (checkEmail.roleId === "4"){
             const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  }).populate('userId').exec()
+
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
                 response:{
                     message: "Successfully log in as crew",
-                    data:fetchCrewInfo
+                    data:token
                 }
             })
 
@@ -136,9 +146,8 @@ const DELETE_USER = async (req, res) => {
         })
     }
 }
+
 module.exports = {
-    //REGISTER_USER,
     LOGIN,
     DELETE_USER,
-
 }

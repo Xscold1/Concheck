@@ -3,9 +3,10 @@ const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
 
-//models crew
+//models
 const Crew = require('../../models/crew')
 const User = require('../../models/user')
+const Dtr = require('../../models/dtr')
 
 //utils
 const cloudinary = require('../../utils/cloudinary')
@@ -80,11 +81,69 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
 }
 
 const TIMEIN = async (req, res) =>{
+    try {
+        const {_id} = req.params
+        const crewTimeIn = await Dtr.create({timeIn: Date.now(), crewId: _id})
+        
+        if(!crewTimeIn){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to timein"
+                }
+            })
+        }
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully log"
+            }
+        })
 
+    } catch (err) {
+        return res.send({
+            status: "FAILED",
+            statusCode:400,
+            response:{
+                messsage: "Failed to update user Account Details"
+            }
+        })
+    }
 }
 
 const TIMEOUT = async (req, res) =>{
+    try {
+        const {_id} = req.params
+        const crewTimeIn = await Dtr.create({timeOut: Date.now(), crewId: _id})
 
+        if(!crewTimeIn){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to timein"
+                }
+            })
+        }
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully log"
+            }
+        })
+
+    } catch (err) {
+        return res.send({
+            status: "FAILED",
+            statusCode:400,
+            response:{
+                messsage: "Failed to update user Account Details"
+            }
+        })
+    }
 }
 
 const COMPUTE_SALARY = async (req, res) => {

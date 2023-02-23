@@ -9,5 +9,7 @@ router.get('/get-all-admin-account', adminController.GET_ALL_ADMIN_ACCOUNT)
 router.get('/get-all-company-account', adminController.GET_ALL_COMPANY_ACCOUNT)
 router.put('/edit-company-account', upload.single('imageUrl') , adminController.EDIT_COMPANY_ACCOUNT)
 router.put('/edit-admin-account', adminController.EDIT_ADMIN_ACCOUNT)
+router.get('/get-admin-account-by-id/:_id', adminController.GET_ADMIN_ACCOUNT_BY_ID)
+router.get('/get-company-account-by-id/:_id', adminController.GET_COMPANY_ACCOUNT_BY_ID)
 
 module.exports = router

@@ -8,38 +8,138 @@ const bcrypt = require('bcrypt');
 const Project = require('../../models/project');
 const Crew = require('../../models/crew');
 const User = require('../../models/user');
+const Task = require('../../models/task');
+const DailyReport = require('../../models/dailyReport');
+
 //global variables
 const saltRounds = 10
 
 const ADD_TASK = async (req, res) => {
     try {
+        const {taskName,startDate, endDate, _id} = req.body;
         
+        const addTask = await Task.create({
+            taskName:taskName,
+            startDate:startDate,
+            endDate:endDate,
+            projectId: _id,
+        })
+        
+        if(!addTask){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to add task"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+                statusCode:200,
+                response:{
+                    message:"Task added successfully"
+                }
+            })
+
     } catch (err) {
-        
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
     }
 }
 
 const GET_ALL_TASK = async (req, res)=>{
     try {
-        
-    } catch (error) {
-        
+        const fetchAlltask = await Task.find()
+
+        if(!fetchAlltask){
+            return res.send({
+                status:"SUCCESS",
+                statusCode:200,
+                response:{
+                    message:"No task Found"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully fetched all tasks",
+                data: fetchAlltask
+            }
+        })
+    } catch (err) {
+        res.send({
+            status:"Internal Server Error",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
     }
 }
 
 const UPLOAD_IMAGE = async (req,res)=>{
     try {
         
-    } catch (error) {
-        
+    } catch (err) {
+        res.send({
+            status:"Internal Server Error",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
     }
 }
 
 const DAILY_REPORT = async (req,res)=>{
     try {
-        
+        const {remarks, weatherReport, causeOfDelay, hoursOfDelay, _id} = req.body
+
+        const insertDailyReport = await DailyReport.create({
+            remarks:remarks,
+            weatherReport:weatherReport,
+            causeOfDelay:causeOfDelay,
+            hoursOfDelay:hoursOfDelay,
+            projectId: _id,
+
+        })
+
+        if(!insertDailyReport){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to insert daily report"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Inserted daily report successfully"
+            }
+        })
+
     } catch (error) {
-        
+        res.send({
+            status:"Internal Server Error",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
     }
 }
 

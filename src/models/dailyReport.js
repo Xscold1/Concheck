@@ -2,20 +2,6 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const dailyReportSchema = new Schema({
-    tasks:{
-        taskName: {
-            type: String,
-            required: true
-        },
-        startDate:{
-            type: Date,
-            required: true
-        },
-        endDate:{
-            type: Date,
-            required: true
-        }
-    },
     remarks: {
         type: String,
         required: true
@@ -33,8 +19,12 @@ const dailyReportSchema = new Schema({
         required: true
     },
     projectId: {
-        type:Number,
+        type:mongoose.Schema.Types.ObjectId,
         ref: 'projects'
+    },
+    taskId:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'task'  
     }
 })
 

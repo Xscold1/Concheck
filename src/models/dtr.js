@@ -2,15 +2,18 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const dtrSchema = new Schema({
+
    timeIn:{
-    type: Date,
+      type: Date,
    },
+
    timeOut:{
-    tpye:Date,
+      tpye:Date,
    },
+   
    crewId:{
-    type: mongoose.Schema.Types.ObjectId,
-    ref:('crews')
+      type: mongoose.Schema.Types.ObjectId,
+      ref:('crews')
    }
 
 })

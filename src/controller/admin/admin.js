@@ -9,6 +9,7 @@ const Company = require('../../models/company')
 
 //library
 const bcrypt = require('bcrypt');
+const { response } = require('express');
 const saltRounds = 10
 
 const ADD_ADMIN_ACCOUNT = async (req, res) => {
@@ -86,6 +87,74 @@ const GET_ALL_ADMIN_ACCOUNT = async (req,res) => {
             statusCode:500,
             response:{
                 message: err.message
+            }
+        })
+    }
+}
+
+const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
+    try {
+        const {_id} = req.params
+        const findAdminAccount = await User.find({_id:_id})
+
+        if(!findAdminAccount) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to find admin account"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Fetch Successfully",
+                data:findAdminAccount
+            }
+        })
+    } catch (err) {
+        return res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:err.message,
+            }
+        })
+    }
+}
+
+const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
+    try {
+        const {_id} = req.params
+        const findCompanyAccount = await Company.find({userId:_id}).populate('userId')
+
+        if(!findCompanyAccount) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to find admin account"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Fetch Successfully",
+                data:findCompanyAccount
+            }
+        })
+    } catch (err) {
+        return res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:err.message,
             }
         })
     }
@@ -337,5 +406,7 @@ module.exports= {
     ADD_COMPANY_ACCOUNT,
     GET_ALL_COMPANY_ACCOUNT,
     EDIT_COMPANY_ACCOUNT,
-    EDIT_ADMIN_ACCOUNT
+    EDIT_ADMIN_ACCOUNT,
+    GET_ADMIN_ACCOUNT_BY_ID,
+    GET_COMPANY_ACCOUNT_BY_ID
 }
