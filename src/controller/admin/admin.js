@@ -9,12 +9,11 @@ const Company = require('../../models/company')
 
 //library
 const bcrypt = require('bcrypt');
-const { response } = require('express');
 const saltRounds = 10
 
 const ADD_ADMIN_ACCOUNT = async (req, res) => {
     try {
-        const {email, password, roleId} = req.body;
+        const {email, password} = req.body;
         const checkAdminIfExist = await User.findOne({email: email}).exec()
 
         if (checkAdminIfExist){
@@ -28,7 +27,7 @@ const ADD_ADMIN_ACCOUNT = async (req, res) => {
         }
         const hashPassword = bcrypt.hashSync(password, saltRounds)
 
-        const createAdmin = await User.create({email:email, password:hashPassword, roleId:roleId})
+        const createAdmin = await User.create({email:email, password:hashPassword, roleId:"1"})
 
         if(!createAdmin){
             return res.send({
@@ -204,7 +203,6 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
         const registerUser = {
             email: req.body.email,
             password: req.body.password,
-            roleId: req.body.roleId
         }
 
         const registerCompany = {
@@ -227,7 +225,7 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
 
         const hashPassword = bcrypt.hashSync(registerUser.password, saltRounds)
 
-        const createUser = await User.create([{email:registerUser.email, password:hashPassword, roleId: registerUser.roleId}], {session})
+        const createUser = await User.create([{email:registerUser.email, password:hashPassword, roleId: "2"}], {session})
 
         if(!createUser){
             return res.send({

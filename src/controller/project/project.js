@@ -149,7 +149,7 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
 
         session.startTransaction()
 
-        const {email , password , rate, startShift, endShift, roleId} = req.body
+        const {email , password , rate, startShift, endShift} = req.body
 
         const checkEmailIfExists = await User.findOne({email:email})
         if(checkEmailIfExists){
@@ -168,7 +168,7 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
         const createCrewUserAccount = await User.create([{
             email:email, 
             password:hashPassword, 
-            roleId:roleId
+            roleId:"4"
         }], {session})
 
         if(!createCrewUserAccount){
