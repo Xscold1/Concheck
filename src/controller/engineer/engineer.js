@@ -159,7 +159,7 @@ const EDIT_PROJECT = async (req, res) => {
 
 const DELETE_PROJECT = async (req, res) => {
     try {
-        const {_id} = req.body
+        const {_id} = req.params
         const findByIdAndDelete = await Project.findByIdAndDelete(_id)
 
         if(!findByIdAndDelete){
