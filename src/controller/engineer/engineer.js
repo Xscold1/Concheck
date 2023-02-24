@@ -112,8 +112,9 @@ const GET_ALL_PROJECT = async (req, res) => {
 
 const EDIT_PROJECT = async (req, res) => {
     try {
+        const {_id} = req.params
         const createProjectInfo = {
-            _id:req.body._id,
+            
             siteEngineer:req.body.siteEngineer,
             safetyOfficer:req.body.safetyOfficer,
             projectCode:req.body.projectCode,
@@ -123,7 +124,7 @@ const EDIT_PROJECT = async (req, res) => {
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         
-        const findAndUpdateProject = await Project.findByIdAndUpdate(createProjectInfo._id, {
+        const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
             $set:{
                 ...createProjectInfo,
                 imageUrl:uploadImage.Url
