@@ -3,7 +3,7 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
-const fs = require('fs');
+
 
 //models
 const Project = require('../../models/project');
@@ -107,39 +107,34 @@ const GET_ALL_TASK = async (req, res)=>{
 
 const UPLOAD_IMAGE = async (req,res)=>{
     try {
-        const {_id}= req.params
+        const {_id} = req.params
+        const images = req.files;
+        const captions = req.body.caption;
+        // Iterate over the uploaded images and captions
+        for (let i = 0; i < images.length; i++) {
+            const image = images[i];
+            const caption = captions[i];
+            // Upload the image to Cloudinary
 
-        const url = []
-        const files = req.files
+            const result = await cloudinary.uploader.upload(image.path)
+        
+            // Create a new image document and save it to the database
 
-        const uploader = async (path)  => await cloudinary.uploads(path, 'Images')
+            const newImage = new Image({
+                imageUrl: result.url,
+                caption: caption,
+                projectId: _id,
+                date: Date.now()
+            });
 
-        for(const file of files){
-            const {path} = file;
-            const newPath = await uploader (path)
-            url.push(newPath)
-            fs.unlinkSync(path)
-        }
-
-        const addMultipleImage = await Image.create({
-            projectId:_id,
-        })
-
-        if(!addMultipleImage) {
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to upload image"
-                }
-            })
-        }
-
+            newImage.save()
+    }
+      
         res.send({
             status:"SUCCESS",
             statusCode:200,
             response:{
-                message:"Image successfully uploaded"
+                message:"Uploaded image successfully"
             }
         })
 
@@ -176,42 +171,6 @@ const GET_PROJECT_BY_ID = async (req, res) => {
             response:{
                 message:"Fetch Successfully",
                 data:fetchProjectDetails
-            }
-        })
-    } catch (err) {
-        res.send({
-            status:"Internal Server Error",
-            statusCode:500,
-            response:{
-                message:err.message
-            }
-        })
-    }
-}
-
-const FIND_IMAGE_AND_UPDATE_CAPTION = async (req,res) => {
-    try {
-        const {_id} = req.params
-        const {caption} = req.body
-
-        const findImageAndUpdate = await Image.findByIdAndUpdatey(_id, {caption:caption, date: Date.now()})
-        
-        if(!findImageAndUpdate){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to update Image"
-                }
-            })
-        }
-
-        res.send({
-            status:"SUCCESS",
-            statusCode:200,
-            response:{
-                message:"Successsfully updated image",
-                data:findImageAndUpdate
             }
         })
     } catch (err) {
@@ -383,7 +342,6 @@ module.exports = {
     ADD_DAILY_REPORT,
     UPLOAD_IMAGE,
     GET_ALL_TASK,
-    FIND_IMAGE_AND_UPDATE_CAPTION,
     GET_PROJECT_BY_ID,
     GET_ALL_CREW
 }

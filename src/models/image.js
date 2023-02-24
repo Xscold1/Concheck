@@ -2,11 +2,14 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const imageSchema = new Schema({
+    imageUrl:{
+        type:String
+    },
     caption: {
         type: String,
      },
     date: {
-        type: Number,
+        type: Date,
         required: true
     },
     projectId: {
