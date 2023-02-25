@@ -24,7 +24,7 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
 
         session.startTransaction();
 
-        
+        const {_id} = req.params
         const userAccountInput = {
             email: req.body.email,
             password: req.body.password
@@ -56,7 +56,8 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
         const registerUser = await User.create([{
             email: userAccountInput.email, 
             password: hashPassword, 
-            roleId: "3", 
+            roleId: "3",
+            companyId: _id
         }], { session })
 
         if(!registerUser){
