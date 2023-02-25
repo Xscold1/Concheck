@@ -43,7 +43,7 @@ const crewSchema = new Schema({
     },
 
     projectId: {
-        type:Number,
+        type:mongoose.Schema.Types.ObjectId,
         ref: 'projects'
     },
 

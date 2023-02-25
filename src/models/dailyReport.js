@@ -18,6 +18,10 @@ const dailyReportSchema = new Schema({
         type: Number,
         required: true
     },
+    date:{
+        type:Date,
+        required: true
+    },
     projectId: {
         type:mongoose.Schema.Types.ObjectId,
         ref: 'projects'

@@ -231,7 +231,7 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
     try {
 
         session.startTransaction()
-
+        const {_id} = req.params
         const {email , password , rate, startShift, endShift} = req.body
 
         const checkEmailIfExists = await User.findOne({email:email})
@@ -270,7 +270,8 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             rate:rate,
             startShift:startShift,
             endShift:endShift,
-            userId:id[0]
+            userId:id[0],
+            projectId:_id
         }], {session})
 
         if(!createCrewAccount){
@@ -304,16 +305,26 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
     session.endSession
 }
 
-const GET_ALL_CREW = async (req, res) => {
+const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
     try {
-        const fetchAllCrew = await Crew.find({roleId:"4"}).populate('userId').exec()
+        const {_id} = req.params
+        const fetchAllCrew = await Crew.find({projectId:_id}).populate('userId').exec()
 
-        if(!fetchAllCrew){
+        if(fetchAllCrew.length === 0 ){
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
                 response:{
-                    message:"No task Found"
+                    message:"No Crew Found"
+                }
+            })
+        }
+        if(!fetchAllCrew){
+            return res.send({
+                status:"Failed",
+                statusCode:400,
+                response:{
+                    message:"Failed to get crew details"
                 }
             })
         }
@@ -336,6 +347,40 @@ const GET_ALL_CREW = async (req, res) => {
         })
     }
 }
+
+const GET_DAILY_REPORT_BY_ID = async (req, res) => {
+    try {
+        const {_id} = req.params
+        const fetchDailyReport = await DailyReport.find({_id}).populate('taskId').exec()
+
+        if(!fetchDailyReport){
+            return res.send({
+                status:"Failed",
+                statusCode:400,
+                response:{
+                    message:"Failed to fetch daily report"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully fetched all tasks",
+                data: fetchDailyReport
+            }
+        })
+    } catch (err) {
+        res.send({
+            status:"Internal Server Error",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
+    }
+}
 module.exports = {
     ADD_TASK,
     ADD_CREW_ACCOUNT,
@@ -343,5 +388,6 @@ module.exports = {
     UPLOAD_IMAGE,
     GET_ALL_TASK,
     GET_PROJECT_BY_ID,
-    GET_ALL_CREW
+    GET_ALL_CREW_BY_PROJECT,
+    GET_DAILY_REPORT_BY_ID
 }
