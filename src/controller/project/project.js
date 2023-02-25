@@ -59,141 +59,18 @@ const ADD_TASK = async (req, res) => {
     }
 }
 
-const GET_ALL_TASK = async (req, res)=>{
-    try {
-        const {_id} = req.params
-
-        const fetchAlltask = await Task.find({projectId: _id})
-        
-        
-        if(fetchAlltask.length === 0){
-            return res.send({
-                status:"SUCCESS",
-                statusCode:200,
-                response:{
-                    message:"No task Found"
-                }
-            })
-        }
-
-        if(!fetchAlltask){
-            return res.send({
-                status:"SUCCESS",
-                statusCode:200,
-                response:{
-                    message:"No task Found"
-                }
-            })
-        }
-
-        res.send({
-            status:"SUCCESS",
-            statusCode:200,
-            response:{
-                message:"Successfully fetched all tasks",
-                data: fetchAlltask
-            }
-        })
-    } catch (err) {
-        res.send({
-            status:"Internal Server Error",
-            statusCode:500,
-            response:{
-                message:err.message
-            }
-        })
-    }
-}
-
-const UPLOAD_IMAGE = async (req,res)=>{
-    try {
-        const {_id} = req.params
-        const images = req.files;
-        const captions = req.body.caption;
-        // Iterate over the uploaded images and captions
-        for (let i = 0; i < images.length; i++) {
-            const image = images[i];
-            const caption = captions[i];
-            // Upload the image to Cloudinary
-
-            const result = await cloudinary.uploader.upload(image.path)
-        
-            // Create a new image document and save it to the database
-
-            const newImage = new Image({
-                imageUrl: result.url,
-                caption: caption,
-                projectId: _id,
-                date: Date.now()
-            });
-
-            newImage.save()
-    }
-      
-        res.send({
-            status:"SUCCESS",
-            statusCode:200,
-            response:{
-                message:"Uploaded image successfully"
-            }
-        })
-
-    } catch (err) {
-        res.send({
-            status:"Internal Server Error",
-            statusCode:500,
-            response:{
-                message:err.message
-            }
-        })
-    }
-}
-
-const GET_PROJECT_BY_ID = async (req, res) => {
-    try {
-        const {_id} = req.params
-
-        const fetchProjectDetails = await Project.findById(_id)
-
-        if(!fetchProjectDetails) {
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Project not found"
-                }
-            })
-        }
-
-        res.send({
-            status:"SUCCESS",
-            statusCode:200,
-            response:{
-                message:"Fetch Successfully",
-                data:fetchProjectDetails
-            }
-        })
-    } catch (err) {
-        res.send({
-            status:"Internal Server Error",
-            statusCode:500,
-            response:{
-                message:err.message
-            }
-        })
-    }
-}
-
 const ADD_DAILY_REPORT = async (req,res)=>{
     try {
-        const {remarks, weatherReport, causeOfDelay, hoursDelay, _id} = req.body
+        const {projectId} = req.params
+        const {remarks, weatherReport, causeOfDelay, hoursDelay} = req.body
 
         const insertDailyReport = await DailyReport.create({
             remarks:remarks,
             weatherReport:weatherReport,
             causeOfDelay:causeOfDelay,
             hoursDelay:hoursDelay,
-            projectId: _id,
+            projectId: projectId,
+            date:Date.now()
 
         })
 
@@ -305,6 +182,131 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
     session.endSession
 }
 
+const UPLOAD_IMAGE = async (req,res)=>{
+    try {
+        const {_id} = req.params
+        const images = req.files;
+        const captions = req.body.caption;
+        // Iterate over the uploaded images and captions
+        for (let i = 0; i < images.length; i++) {
+            const image = images[i];
+            const caption = captions[i];
+            // Upload the image to Cloudinary
+
+            const result = await cloudinary.uploader.upload(image.path)
+        
+            // Create a new image document and save it to the database
+
+            const newImage = new Image({
+                imageUrl: result.url,
+                caption: caption,
+                projectId: _id,
+                date: Date.now()
+            });
+
+            newImage.save()
+    }
+      
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Uploaded image successfully"
+            }
+        })
+
+    } catch (err) {
+        res.send({
+            status:"Internal Server Error",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
+    }
+}
+
+const GET_ALL_TASK = async (req, res)=>{
+    try {
+        const {_id} = req.params
+
+        const fetchAlltask = await Task.find({projectId: _id})
+        
+        
+        if(fetchAlltask.length === 0){
+            return res.send({
+                status:"SUCCESS",
+                statusCode:200,
+                response:{
+                    message:"No task Found"
+                }
+            })
+        }
+
+        if(!fetchAlltask){
+            return res.send({
+                status:"SUCCESS",
+                statusCode:200,
+                response:{
+                    message:"No task Found"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully fetched all tasks",
+                data: fetchAlltask
+            }
+        })
+    } catch (err) {
+        res.send({
+            status:"Internal Server Error",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
+    }
+}
+
+const GET_PROJECT_BY_ID = async (req, res) => {
+    try {
+        const {_id} = req.params
+
+        const fetchProjectDetails = await Project.findById(_id)
+
+        if(!fetchProjectDetails) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Project not found"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Fetch Successfully",
+                data:fetchProjectDetails
+            }
+        })
+    } catch (err) {
+        res.send({
+            status:"Internal Server Error",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
+    }
+}
+
 const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
     try {
         const {_id} = req.params
@@ -381,6 +383,143 @@ const GET_DAILY_REPORT_BY_ID = async (req, res) => {
         })
     }
 }
+
+const GET_TASK_BY_ID = async (req, res) => {
+    try {
+        const {taskId} = req.params
+        const findTask = await Task.find({_id:taskId}).exec()
+
+        if(!findTask){
+            return res.send({
+                status:"SUCCESS",
+                statusCode:200,
+                response:{
+                    message:"Task not found",
+                }
+            })
+        }
+        
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Task Fetch successfully",
+                data:findTask
+            }
+        })
+    } catch (err) {
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
+    }
+}
+
+const GET_ALL_DAILY_REPORT_BY_PROJECT = async (req, res) => {
+    try {
+        const {projectId} = req.params
+
+        const findAllDailyReport = await DailyReport.find({projectId:projectId})
+
+        if(!findAllDailyReport.length === 0){
+            return res.send({
+                status:"FAILED",
+                status:400,
+                response:{
+                    message:"No Daily Report found",
+                }
+            })
+        }
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:findAllDailyReport
+            }
+        })
+    } catch (err) {
+        return res.send({
+            status:"INTERNAL SERVER ERROR",
+            status:500,
+            response:{
+                message:err.message,
+            }
+        })
+    }
+}
+
+const EDIT_TASK = async (req, res) => {
+    try {
+        const {taskId} = req.params
+        const {taskName, startDate, endDate} = req.body
+        const findTask = await Task.findByIdAndUpdate({_id: taskId},{$set:{taskName:taskName, startDate:startDate, endDate}}).exec()
+
+        if(!findTask){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to update task"
+                }
+            })
+        }
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Task Update Succesfully"
+            }
+        })
+
+    } catch (err) {
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
+    }
+}
+
+const EDIT_DAILY_REPORT = async (req, res) => {
+    try {
+        const {dailyReportId} = req.params
+        const {remarks, weatherReport, causeOfDelay, hoursDelay} = req.body
+        const updateDailyReport = await DailyReport.findByIdAndUpdate(dailyReportId, {$set:{remarks:remarks, weatherReport:weatherReport, causeOfDelay:causeOfDelay, hoursDelay:hoursDelay}}).exec()
+
+        if(!updateDailyReport){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to update daily report"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Update Successfully"
+            }
+        })
+    } catch (err) {
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:err.message
+            }
+        })
+    }
+}
+
+
 module.exports = {
     ADD_TASK,
     ADD_CREW_ACCOUNT,
@@ -389,5 +528,10 @@ module.exports = {
     GET_ALL_TASK,
     GET_PROJECT_BY_ID,
     GET_ALL_CREW_BY_PROJECT,
-    GET_DAILY_REPORT_BY_ID
+    GET_DAILY_REPORT_BY_ID,
+    GET_TASK_BY_ID,
+    GET_ALL_DAILY_REPORT_BY_PROJECT,
+    EDIT_TASK,
+    EDIT_DAILY_REPORT,
+    
 }
