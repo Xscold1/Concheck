@@ -57,7 +57,7 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             email: userAccountInput.email, 
             password: hashPassword, 
             roleId: "3",
-            companyId: _id
+            
         }], { session })
 
         if(!registerUser){
@@ -75,7 +75,8 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
         const registerEngineer = await Engineer.create([{
             ...engineerAccountInput,
             imageUrl: uploadImage.url, 
-            userId: result[0]
+            userId: result[0],
+            companyId: _id
         }], { session })
 
         if(!registerEngineer){

@@ -32,6 +32,7 @@ const  engineerSchema = new Schema({
     companyId:{
         type: Number,
         required:true,
+        ref:"company"
     },
 
     userId:{
