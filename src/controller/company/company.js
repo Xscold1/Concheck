@@ -180,9 +180,8 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
-
+        const {_id} = req.params
         const userAccountInput = {
-            _id: req.body._id,
             password: req.body.password,
         } 
 
@@ -197,7 +196,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
 
         const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
 
-        const updateEngineerUserAccount = await User.findByIdAndUpdate(userAccountInput._id, [{
+        const updateEngineerUserAccount = await User.findByIdAndUpdate(_id, [{
             $set:{
                 email: userAccountInput.email, 
                 password: hashPassword

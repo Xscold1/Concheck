@@ -281,7 +281,8 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
 
 const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
     try {
-        const {id, email, password} = req.body;
+        const {_id} = req.params
+        const {email, password} = req.body;
         // if(!_id){
         //     return res.send({
         //         status:"FAILED",
@@ -291,7 +292,7 @@ const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
         //         }
         //     })
         // }
-        const updateAdminAccount = await User.findByIdAndUpdate(id, {email: email, password: password})
+        const updateAdminAccount = await User.findByIdAndUpdate(_id, {email: email, password: password})
 
         if(!updateAdminAccount){
             return res.send({
@@ -326,8 +327,8 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
+        const {_id} = req.params
         const updateUser = {
-            _id: req.body._id,
             email: req.body.email,
             password: req.body.password,
             roleId: req.body.roleId
@@ -342,7 +343,7 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const hashPassword = bcrypt.hashSync(updateUser.password, saltRounds)
 
-        const updateCompanyUserAccount = await User.findByIdAndUpdate(updateUser._id, [{$set: {
+        const updateCompanyUserAccount = await User.findByIdAndUpdate(_id, [{$set: {
             email:updateUser.email, 
             password:hashPassword, 
             roleId: updateUser.roleId, 

@@ -114,7 +114,6 @@ const EDIT_PROJECT = async (req, res) => {
     try {
         const {_id} = req.params
         const createProjectInfo = {
-            
             siteEngineer:req.body.siteEngineer,
             safetyOfficer:req.body.safetyOfficer,
             projectCode:req.body.projectCode,
