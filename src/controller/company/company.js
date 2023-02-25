@@ -37,7 +37,8 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             address: req.body.address
         }
 
-        const uploadImage = await cloudinary.uploader.upload(req.files.path)
+        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+
         const checkEmailIfExists = await User.findOne({email: userAccountInput.email}).exec();
         
         if(checkEmailIfExists) {
@@ -197,8 +198,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
         const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
 
         const updateEngineerUserAccount = await User.findByIdAndUpdate(_id, [{
-            $set:{
-                email: userAccountInput.email, 
+            $set:{ 
                 password: hashPassword
             }}], {session}).exec()
         

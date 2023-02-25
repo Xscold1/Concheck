@@ -1,3 +1,4 @@
+const { required } = require('joi');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const AutoIncrement = require('mongoose-sequence')(mongoose);
@@ -27,7 +28,12 @@ const  engineerSchema = new Schema({
         type: String,
         required:true
     },
-    
+
+    companyId:{
+        type: Number,
+        required:true,
+    },
+
     userId:{
         type: Number,
         ref: 'User',
