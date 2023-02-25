@@ -113,9 +113,10 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
     session.endSession();
 }
 
-const GET_ALL_ENGINEER_ACCOUNT = async (req, res)=>{
+const GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY = async (req, res)=>{
     try {
-        const fetchAllEngineerData = await Engineer.find({roleId:"2"}).populate('userId').exec()
+        const {_id} = req.params
+        const fetchAllEngineerData = await Engineer.find({companyId:_id}).populate('userId').exec()
 
         if (!fetchAllEngineerData) {
             return res.send({
@@ -258,6 +259,6 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
 module.exports = {
     ADD_ENGINEER_ACCOUNT,
     EDIT_ENGINEER_ACCOUNT,
-    GET_ALL_ENGINEER_ACCOUNT,
+    GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY,
     GET_ENGINEER_ACCOUNT_BY_ID
 }
