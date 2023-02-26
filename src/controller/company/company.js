@@ -39,7 +39,17 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
 
-        const checkEmailIfExists = await User.findOne({email: userAccountInput.email}).exec();
+        const checkEmailIfExists = await User.findOne({email: userAccountInput.email})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
         
         if(checkEmailIfExists) {
             return res.send({
@@ -59,6 +69,16 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             roleId: "3",
             
         }], { session })
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!registerUser){
             return res.send({
@@ -78,6 +98,16 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             userId: result[0],
             companyId: _id
         }], { session })
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!registerEngineer){
             return res.send({
@@ -116,7 +146,17 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
 const GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY = async (req, res)=>{
     try {
         const {_id} = req.params
-        const fetchAllEngineerData = await Engineer.find({companyId:_id}).populate('userId').exec()
+        const fetchAllEngineerData = await Engineer.find({companyId:_id}).populate('userId')
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if (!fetchAllEngineerData) {
             return res.send({
@@ -150,6 +190,16 @@ const GET_ENGINEER_ACCOUNT_BY_ID = async (req,res) => {
     try {
         const {_id} = req.params
         const findEngineerAccount = await Engineer.find({userId:_id}).populate('userId')
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!findEngineerAccount) {
             return res.send({
@@ -203,7 +253,17 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
         const updateEngineerUserAccount = await User.findByIdAndUpdate(_id, [{
             $set:{ 
                 password: hashPassword
-            }}], {session}).exec()
+            }}], {session})
+            .catch((error) =>{
+                console.error;
+                return res.send({
+                    status: "FAILED",
+                    statusCode: 500,
+                    response: {
+                        message: error.message
+                    }
+                });
+            })
         
         if(!updateEngineerUserAccount){
             return res.send({
@@ -220,7 +280,17 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             },[{$set: {
                 ...engineerAccountInput,
                 imageUrl: uploadImage.url
-            }}], {session}).exec()
+            }}], {session})
+            .catch((error) =>{
+                console.error;
+                return res.send({
+                    status: "FAILED",
+                    statusCode: 500,
+                    response: {
+                        message: error.message
+                    }
+                });
+            })
 
 
         if(!updateEngineerAccount){

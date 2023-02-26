@@ -29,7 +29,17 @@ const CREATE_PROJECT = async (req, res) => {
         }
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
-        const checkProjecifExist = await Project.findOne({projectName: createProjectInfo.projectName});
+        const checkProjecifExist = await Project.findOne({projectName: createProjectInfo.projectName})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(checkProjecifExist){
             return res.send({
@@ -44,7 +54,17 @@ const CREATE_PROJECT = async (req, res) => {
         const createProject = await Project.create({
             ...createProjectInfo,
             imageUrl: uploadImage.url
-            })
+        })
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!createProject){
             return res.send({
@@ -79,7 +99,17 @@ const GET_ALL_PROJECT = async (req, res) => {
     try {
         const {projectEngineer} = req.params
         console.log(projectEngineer)
-        const fetchAllProject = await Project.find({projectEngineer: projectEngineer}).exec()
+        const fetchAllProject = await Project.find({projectEngineer: projectEngineer})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!fetchAllProject){
             return res.send({
@@ -127,7 +157,16 @@ const EDIT_PROJECT = async (req, res) => {
             $set:{
                 ...createProjectInfo,
                 imageUrl:uploadImage.Url
-            }})
+            }}).catch((error) =>{
+                console.error;
+                return res.send({
+                    status: "FAILED",
+                    statusCode: 500,
+                    response: {
+                        message: error.message
+                    }
+                });
+            })
 
         if(!findAndUpdateProject){
             return res.send({
@@ -161,6 +200,16 @@ const DELETE_PROJECT = async (req, res) => {
     try {
         const {_id} = req.params
         const findByIdAndDelete = await Project.findByIdAndDelete(_id)
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!findByIdAndDelete){
             return res.send({

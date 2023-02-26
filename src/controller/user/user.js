@@ -16,7 +16,17 @@ const LOGIN = async (req, res) => {
     try {
         const {email, password} = req.body
 
-        const checkEmail = await User.findOne({email: email}).exec()
+        const checkEmail = await User.findOne({email: email})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if (!checkEmail){
             return res.send({
@@ -56,7 +66,16 @@ const LOGIN = async (req, res) => {
 
         }else if(checkEmail.roleId === "2"){
 
-            const fetchCompanyInfo = await Company.findOne({userId:checkEmail._id }).populate('userId').exec()
+            const fetchCompanyInfo = await Company.findOne({userId:checkEmail._id }).populate('userId').catch((error) =>{
+                console.error;
+                return res.send({
+                    status: "FAILED",
+                    statusCode: 500,
+                    response: {
+                        message: error.message
+                    }
+                });
+            }).exec()
             const token = tokenization.generateToken({_id:checkEmail._id, roleId:checkEmail.roleId, firstName: fetchCompanyInfo.firstName})
             
             return res.send({
@@ -69,7 +88,16 @@ const LOGIN = async (req, res) => {
             })
 
         }else if(checkEmail.roleId === "3"){
-            const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail._id  }).populate('userId').exec()
+            const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail._id  }).populate('userId').catch((error) =>{
+                console.error;
+                return res.send({
+                    status: "FAILED",
+                    statusCode: 500,
+                    response: {
+                        message: error.message
+                    }
+                });
+            }).exec()
             const token = tokenization.generateToken({_id:email._id, roleId:checkEmail.roleId, firstName: fetchEngineerInfo.firstName, EngineerId: fetchEngineerInfo._id})
             return res.send({
                 status:"SUCCESS",
@@ -81,7 +109,16 @@ const LOGIN = async (req, res) => {
             })
 
         }else if (checkEmail.roleId === "4"){
-            const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  }).populate('userId').exec()
+            const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  }).populate('userId').catch((error) =>{
+                console.error;
+                return res.send({
+                    status: "FAILED",
+                    statusCode: 500,
+                    response: {
+                        message: error.message
+                    }
+                });
+            }).exec()
             const token = tokenization.generateToken({_id:fetchCrewInfo._id, roleId:checkEmail.roleId, firstName: fetchCrewInfo.firstName})
 
             return res.send({
@@ -104,52 +141,7 @@ const LOGIN = async (req, res) => {
     }
 }
 
-const DELETE_USER = async (req, res) => {
-    try {
-        const {email} = req.body;
-
-        const checkEmail = await User.findOne({ email:email });
-
-        if (!checkEmail){
-            return res.send({
-                status:"ERROR",
-                statusCode:400,
-                response:{
-                    message: "User not found",
-                }
-            })
-        }
-
-        const deleteUser = await User.delete({ email:email})
-
-        if(!deleteUser){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message: "Failed to delete user",
-                }
-            })
-        }
-
-        res.send({
-            status:"SUCCESS",
-            statusCode:200,
-            response:{
-                message: "User deleted successfully"
-            }
-        })
-
-    } catch (err) {
-         res.send({
-            status: "INTERNAL SERVER ERROR",
-            statusCode:500,
-            message: err.message,
-        })
-    }
-}
 
 module.exports = {
     LOGIN,
-    DELETE_USER,
 }

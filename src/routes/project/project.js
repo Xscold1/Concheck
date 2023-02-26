@@ -16,5 +16,6 @@ router.get('/get-task-by-id/:taskId', auth,projectController.GET_TASK_BY_ID)
 router.get('/get-all-daily-report-by-project/:projectId', auth,projectController.GET_ALL_DAILY_REPORT_BY_PROJECT)
 router.put('/edit-task/:taskId', auth,projectController.EDIT_TASK)
 router.put('/edit-daily-report/:dailyReportId', auth,projectController.EDIT_DAILY_REPORT)
+router.get('/download-csv-by-project/:projectId', auth, projectController.DOWNLOAD_CSV_BY_PROJECT)
 
 module.exports = router
