@@ -6,6 +6,5 @@ const upload = require('../../middleware/upload');
 
 //router.post('/register', userController.REGISTER)
 router.post('/login', userController.LOGIN)
-router.delete('/delete-user', auth,userController.DELETE_USER)
 
 module.exports = router

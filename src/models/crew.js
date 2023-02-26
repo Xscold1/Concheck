@@ -24,12 +24,12 @@ const crewSchema = new Schema({
     },
 
     startShift:{
-        type: Number,
+        type: String,
         required: true
     },
 
     endShift:{
-        type: Number,
+        type: String,
         required: true
     },
 

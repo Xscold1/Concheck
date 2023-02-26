@@ -14,7 +14,17 @@ const saltRounds = 10
 const ADD_ADMIN_ACCOUNT = async (req, res) => {
     try {
         const {email, password} = req.body;
-        const checkAdminIfExist = await User.findOne({email: email}).exec()
+        const checkAdminIfExist = await User.findOne({email: email})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if (checkAdminIfExist){
             return res.send({
@@ -28,6 +38,16 @@ const ADD_ADMIN_ACCOUNT = async (req, res) => {
         const hashPassword = bcrypt.hashSync(password, saltRounds)
 
         const createAdmin = await User.create({email:email, password:hashPassword, roleId:"1"})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!createAdmin){
             return res.send({
@@ -58,140 +78,6 @@ const ADD_ADMIN_ACCOUNT = async (req, res) => {
     }
 }
 
-const GET_ALL_ADMIN_ACCOUNT = async (req,res) => {
-    try {
-        const getAllAdmin = await User.find({roleId: "1"})
-
-        if (!getAllAdmin) {
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to get all accounts"
-                }
-            })
-        }
-
-        res.send({
-            status:"SUCCESS",
-            statusCode:200,
-            response:{
-                message:"Fetch all admin successfully",
-                data:getAllAdmin
-            }
-        })
-    } catch (err) {
-        return res.send({
-            status:"INTERNAL SERVER ERROR",
-            statusCode:500,
-            response:{
-                message: err.message
-            }
-        })
-    }
-}
-
-const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
-    try {
-        const {_id} = req.params
-        const findAdminAccount = await User.find({_id:_id})
-
-        if(!findAdminAccount) {
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to find admin account"
-                }
-            })
-        }
-
-        res.send({
-            status:"SUCCESS",
-            statusCode:200,
-            response:{
-                message:"Fetch Successfully",
-                data:findAdminAccount
-            }
-        })
-    } catch (err) {
-        return res.send({
-            status:"INTERNAL SERVER ERROR",
-            statusCode:500,
-            response:{
-                message:err.message,
-            }
-        })
-    }
-}
-
-const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
-    try {
-        const {_id} = req.params
-        const findCompanyAccount = await Company.find({userId:_id}).populate('userId')
-
-        if(!findCompanyAccount) {
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to find admin account"
-                }
-            })
-        }
-
-        res.send({
-            status:"SUCCESS",
-            statusCode:200,
-            response:{
-                message:"Fetch Successfully",
-                data:findCompanyAccount
-            }
-        })
-    } catch (err) {
-        return res.send({
-            status:"INTERNAL SERVER ERROR",
-            statusCode:500,
-            response:{
-                message:err.message,
-            }
-        })
-    }
-}
-
-const GET_ALL_COMPANY_ACCOUNT = async (req,res) => {
-    try {
-        const fetchAllCompanyData = await Company.find({roleId:"2"}).populate('userId').exec()
-
-        if (!fetchAllCompanyData) {
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to get all accounts"
-                }
-            })
-        }
-
-        res.send({
-            status:"SUCCESS",
-            statusCode:200,
-            response:{
-                message:"Fetch all companies account successfully",
-                data:fetchAllCompanyData
-            }
-        })
-    } catch (err) {
-        return res.send({
-            status:"INTERNAL SERVER ERROR",
-            statusCode:500,
-            response:{
-                message: err.message
-            }
-        })
-    }
-}
-
 const ADD_COMPANY_ACCOUNT = async (req, res) => {
 
     const session = await conn.startSession()
@@ -211,8 +97,17 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
             contactNumber: req.body.contactNumber
         }
         
-        const checkEmailIfExist = await User.findOne({email:registerUser.email}).exec()
-
+        const checkEmailIfExist = await User.findOne({email:registerUser.email})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
         if(checkEmailIfExist) {
             return res.send({
                 status:"SUCCESS",
@@ -225,7 +120,17 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
 
         const hashPassword = bcrypt.hashSync(registerUser.password, saltRounds)
 
-        const createUser = await User.create([{email:registerUser.email, password:hashPassword, roleId: "2"}], {session})
+        const createUser = await (await User.create([{email:registerUser.email, password:hashPassword, roleId: "2"}], {session}))
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!createUser){
             return res.send({
@@ -244,6 +149,16 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
            userId: id[0],
            imageUrl: uploadImage.url
         }], {session})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
         
         if(!createCompany){
             return res.send({
@@ -279,20 +194,196 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
     session.endSession();
 }
 
-const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
+const GET_ALL_ADMIN_ACCOUNT = async (req,res) => {
+    try {
+        const getAllAdmin = await User.find({roleId: "1"})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
+
+        if (!getAllAdmin) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to get all accounts"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Fetch all admin successfully",
+                data:getAllAdmin
+            }
+        })
+    } catch (err) {
+        return res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message: err.message
+            }
+        })
+    }
+}
+
+const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
     try {
         const {_id} = req.params
+        const findAdminAccount = await User.find({_id:_id})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
+
+        if(!findAdminAccount) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to find admin account"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Fetch Successfully",
+                data:findAdminAccount
+            }
+        })
+    } catch (err) {
+        return res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:err.message,
+            }
+        })
+    }
+}
+
+const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
+    try {
+        const {comapanyUserId} = req.params
+        const findCompanyAccount = await Company.find({userId:comapanyUserId})
+        .populate('userId')
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
+
+        if(!findCompanyAccount) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to find admin account"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Fetch Successfully",
+                data:findCompanyAccount
+            }
+        })
+    } catch (err) {
+        return res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:err.message,
+            }
+        })
+    }
+}
+
+const GET_ALL_COMPANY_ACCOUNT = async (req,res) => {
+    try {
+        const fetchAllCompanyData = await Company.find({roleId:"2"}).populate('userId')
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
+
+        if (!fetchAllCompanyData) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Failed to get all accounts"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Fetch all companies account successfully",
+                data:fetchAllCompanyData
+            }
+        })
+    } catch (err) {
+        return res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message: err.message
+            }
+        })
+    }
+}
+
+const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
+    try {
+        const {adminUserId} = req.params
         const {email, password} = req.body;
-        // if(!_id){
-        //     return res.send({
-        //         status:"FAILED",
-        //         statusCode:400,
-        //         response:{
-        //             message:"Id cannot be undefined"
-        //         }
-        //     })
-        // }
-        const updateAdminAccount = await User.findByIdAndUpdate(_id, {email: email, password: password})
+        const updateAdminAccount = await User.findByIdAndUpdate(adminUserId, {email: email, password: password})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!updateAdminAccount){
             return res.send({
@@ -327,7 +418,7 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
-        const {_id} = req.params
+        const {companyAdminId} = req.params
         const updateUser = {
             email: req.body.email,
             password: req.body.password,
@@ -343,12 +434,22 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const hashPassword = bcrypt.hashSync(updateUser.password, saltRounds)
 
-        const updateCompanyUserAccount = await User.findByIdAndUpdate(_id, [{$set: {
+        const updateCompanyUserAccount = await User.findByIdAndUpdate(companyAdminId, [{$set: {
             email:updateUser.email, 
             password:hashPassword, 
             roleId: updateUser.roleId, 
 
-        }}], {session}).exec()
+        }}], {session})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
         
         if(!updateCompanyUserAccount){
             return res.send({
@@ -365,7 +466,17 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
             },[{$set: {
                 ...registerCompany,
                 imageUrl: uploadImage.url,
-            }}], {session}).exec()
+            }}], {session})
+            .catch((error) =>{
+                console.error;
+                return res.send({
+                    status: "FAILED",
+                    statusCode: 500,
+                    response: {
+                        message: error.message
+                    }
+                });
+            })
 
         if(!updateCompanyAccount){
             return res.send({

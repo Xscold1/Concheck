@@ -3,7 +3,10 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
-
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const {format, parse} = require('date-fns');
+const path = require('path');
+const os = require('os');
 
 //models
 const Project = require('../../models/project');
@@ -28,6 +31,15 @@ const ADD_TASK = async (req, res) => {
             startDate:startDate,
             endDate:endDate,
             projectId: _id,
+        }).catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
         })
         
         if(!addTask){
@@ -71,7 +83,15 @@ const ADD_DAILY_REPORT = async (req,res)=>{
             hoursDelay:hoursDelay,
             projectId: projectId,
             date:Date.now()
-
+        }).catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
         })
 
         if(!insertDailyReport){
@@ -112,6 +132,17 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
         const {email , password , rate, startShift, endShift} = req.body
 
         const checkEmailIfExists = await User.findOne({email:email})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
+
         if(checkEmailIfExists){
             return res.send({
                 status: "FAILED",
@@ -130,6 +161,16 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             password:hashPassword, 
             roleId:"4"
         }], {session})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!createCrewUserAccount){
             return res.send({
@@ -150,6 +191,16 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             userId:id[0],
             projectId:_id
         }], {session})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!createCrewAccount){
             return res.send({
@@ -205,6 +256,16 @@ const UPLOAD_IMAGE = async (req,res)=>{
             });
 
             newImage.save()
+            .catch((error) =>{
+                console.error;
+                return res.send({
+                    status: "FAILED",
+                    statusCode: 500,
+                    response: {
+                        message: error.message
+                    }
+                });
+            })
     }
       
         res.send({
@@ -231,6 +292,16 @@ const GET_ALL_TASK = async (req, res)=>{
         const {_id} = req.params
 
         const fetchAlltask = await Task.find({projectId: _id})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
         
         
         if(fetchAlltask.length === 0){
@@ -277,6 +348,16 @@ const GET_PROJECT_BY_ID = async (req, res) => {
         const {_id} = req.params
 
         const fetchProjectDetails = await Project.findById(_id)
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!fetchProjectDetails) {
             return res.send({
@@ -310,7 +391,17 @@ const GET_PROJECT_BY_ID = async (req, res) => {
 const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
     try {
         const {_id} = req.params
-        const fetchAllCrew = await Crew.find({projectId:_id}).populate('userId').exec()
+        const fetchAllCrew = await Crew.find({projectId:_id}).populate('userId')
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(fetchAllCrew.length === 0 ){
             return res.send({
@@ -353,7 +444,17 @@ const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
 const GET_DAILY_REPORT_BY_ID = async (req, res) => {
     try {
         const {_id} = req.params
-        const fetchDailyReport = await DailyReport.find({_id}).populate('taskId').exec()
+        const fetchDailyReport = await DailyReport.find({_id}).populate('taskId')
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!fetchDailyReport){
             return res.send({
@@ -387,7 +488,17 @@ const GET_DAILY_REPORT_BY_ID = async (req, res) => {
 const GET_TASK_BY_ID = async (req, res) => {
     try {
         const {taskId} = req.params
-        const findTask = await Task.find({_id:taskId}).exec()
+        const findTask = await Task.find({_id:taskId})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!findTask){
             return res.send({
@@ -423,6 +534,16 @@ const GET_ALL_DAILY_REPORT_BY_PROJECT = async (req, res) => {
         const {projectId} = req.params
 
         const findAllDailyReport = await DailyReport.find({projectId:projectId})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!findAllDailyReport.length === 0){
             return res.send({
@@ -440,6 +561,7 @@ const GET_ALL_DAILY_REPORT_BY_PROJECT = async (req, res) => {
                 message:findAllDailyReport
             }
         })
+
     } catch (err) {
         return res.send({
             status:"INTERNAL SERVER ERROR",
@@ -455,7 +577,17 @@ const EDIT_TASK = async (req, res) => {
     try {
         const {taskId} = req.params
         const {taskName, startDate, endDate} = req.body
-        const findTask = await Task.findByIdAndUpdate({_id: taskId},{$set:{taskName:taskName, startDate:startDate, endDate}}).exec()
+        const findTask = await Task.findByIdAndUpdate({_id: taskId},{$set:{taskName:taskName, startDate:startDate, endDate}})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!findTask){
             return res.send({
@@ -489,7 +621,23 @@ const EDIT_DAILY_REPORT = async (req, res) => {
     try {
         const {dailyReportId} = req.params
         const {remarks, weatherReport, causeOfDelay, hoursDelay} = req.body
-        const updateDailyReport = await DailyReport.findByIdAndUpdate(dailyReportId, {$set:{remarks:remarks, weatherReport:weatherReport, causeOfDelay:causeOfDelay, hoursDelay:hoursDelay}}).exec()
+        const updateDailyReport = await DailyReport.findByIdAndUpdate(dailyReportId,
+            {$set:{
+                remarks:remarks,
+                weatherReport:weatherReport, 
+                causeOfDelay:causeOfDelay, 
+                hoursDelay:hoursDelay}
+        })
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
 
         if(!updateDailyReport){
             return res.send({
@@ -519,6 +667,92 @@ const EDIT_DAILY_REPORT = async (req, res) => {
     }
 }
 
+const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
+    try {
+        //to ensure that the csv will be save on user download floder
+        const DOWNLOAD_DIR = path.join(os.homedir(), 'Downloads');
+
+        const {projectId} = req.params
+
+        const now = new Date();
+        const date = format(now, 'yyyy-MM-dd');
+        const timeIn = format(now, 'HH:mm:ss');
+        // Get all the CSV data from the database
+        const csvData = await Csv.find({projectId})
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
+
+        if(!csvData){
+            return res.send({
+                status: "FAILED",
+                statusCode: 400,
+                response: {
+                    message: "No csv data found"
+                }
+            });
+        }
+
+        // Define the headers for the CSV file
+        const csvHeaders = [
+            { id: 'Name', title: 'Name' },
+            { id: 'monday', title: 'Monday' },  
+            { id: 'teusday', title: 'Tuesday' },
+            { id: 'wednesDay', title: 'Wednesday' },
+            { id: 'thursDay', title: 'Thursday' },
+            { id: 'friday', title: 'Friday' },
+            { id: 'totalHoursWork', title: 'Total Hours Worked' },
+            { id: 'totalOverTimeHours', title: 'Total Overtime Hours' },
+            { id: 'totalLateHours', title: 'Total Late Hours' },
+        ];
+
+        // Create the CSV writer with the defined headers
+        const csvWriter = createCsvWriter({
+            path: path.join(DOWNLOAD_DIR, `${date}-crewRecord.csv`),
+            header: csvHeaders
+        });
+
+        // Write the CSV data to the file
+        await csvWriter.writeRecords(csvData)
+        .catch((error) =>{
+            console.error;
+            return res.send({
+                status: "FAILED",
+                statusCode: 500,
+                response: {
+                    message: error.message
+                }
+            });
+        })
+
+        return res.send({
+            status: 'OK',
+            statusCode: 200,
+            response: {
+                message: 'CSV file written successfully'
+            }
+        });
+        
+
+    } catch (error) {
+        console.error(error);
+        return res.send({
+            status: 'INTERNAL SERVER ERROR',
+            statusCode: 500,
+            response: {
+            message: error.message
+            }
+        });
+    }
+}
+
 
 module.exports = {
     ADD_TASK,
@@ -533,5 +767,6 @@ module.exports = {
     GET_ALL_DAILY_REPORT_BY_PROJECT,
     EDIT_TASK,
     EDIT_DAILY_REPORT,
+    DOWNLOAD_CSV_BY_PROJECT
     
 }

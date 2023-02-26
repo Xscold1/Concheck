@@ -4,17 +4,40 @@ const Schema = mongoose.Schema;
 const dtrSchema = new Schema({
 
    timeIn:{
-      type: Date,
+      type: String,
    },
 
    timeOut:{
-      tpye:Date,
+      tpye:String,
+   },
+
+   date:{
+      type:String
+   },
+
+   dayToday: {
+      type:String,
+   },
+
+   hoursOfWorkToday:{
+      type:Number,
+      default:0
+   },
+   
+   hoursOfLateToday:{
+      type:Number,
+      default:0
+   },
+   
+   hoursOfOverTimeToday:{
+      type:Number,
+      default:0
    },
    
    crewId:{
-      type: mongoose.Schema.Types.ObjectId,
-      ref:('crews')
-   }
+      type:mongoose.Schema.Types.ObjectId,
+      ref:'crew'
+   },
 
 })
 
