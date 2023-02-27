@@ -13,11 +13,12 @@ const saltRounds = 10
 
 const ADD_ADMIN_ACCOUNT = async (req, res) => {
     try {
+
         const {email, password} = req.body;
         const checkAdminIfExist = await User.findOne({email: email})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find user");
         })
 
         if (checkAdminIfExist){
@@ -31,21 +32,11 @@ const ADD_ADMIN_ACCOUNT = async (req, res) => {
         }
         const hashPassword = bcrypt.hashSync(password, saltRounds)
 
-        const createAdmin = await User.create({email:email, password:hashPassword, roleId:"1"})
+        await User.create({email:email, password:hashPassword, roleId:"1"})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to create admin account");
         })
-
-        if(!createAdmin){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to create admin"
-                }
-            })
-        }
 
         res.send({
             status:"OK",
@@ -55,12 +46,13 @@ const ADD_ADMIN_ACCOUNT = async (req, res) => {
             }
         })
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         return res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message: err.message
+                message: "Failed to create admin account"
             }
         })
     }
@@ -88,8 +80,9 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
         const checkEmailIfExist = await User.findOne({email:registerUser.email})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find user");
         })
+
         if(checkEmailIfExist) {
             return res.send({
                 status:"SUCCESS",
@@ -102,23 +95,17 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
 
         const hashPassword = bcrypt.hashSync(registerUser.password, saltRounds)
 
-        const createUser = await (await User.create([{email:registerUser.email, password:hashPassword, roleId: "2"}], {session}))
+        const createCompanyUserAccount =  await User.create([{email:registerUser.email, password:hashPassword, roleId: "2"}],{session})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to Create Company User Account");
         })
 
-        if(!createUser){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to add user"
-                }
-            })
+        if(!createCompanyUserAccount){
+            throw new Error("Failed to Create Company User Account");
         }
 
-        let id = createUser.map(a => a._id)
+        let id = createCompanyUserAccount.map(a => a._id)
 
         const createCompany = await Company.create([{
            ...registerCompany,
@@ -127,35 +114,30 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
         }], {session})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to Insert Comapny Detailes");
         })
         
         if(!createCompany){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to add company"
-                }
-            })
+            throw new Error("Failed to Insert Comapny Detailes");
         }
 
         res.send({
             status:"SUCCESS",
             statusCode:200,
             response:{
-                message:"Successfully Added Company"
+                message:"Successfully Added Company Account"
             }
         })
 
         await session.commitTransaction();
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message:err.message
+                message: "Failed to Create Company Account"
             }
             
         })
@@ -169,15 +151,15 @@ const GET_ALL_ADMIN_ACCOUNT = async (req,res) => {
         const getAllAdmin = await User.find({roleId: "1"})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find admin accounts");
         })
 
-        if (!getAllAdmin) {
+        if (!getAllAdmin || getAllAdmin.length === 0){
             return res.send({
                 status:"FAILED",
                 statusCode:400,
                 response:{
-                    message:"Failed to get all accounts"
+                    message:"No Admin Account found"
                 }
             })
         }
@@ -190,12 +172,13 @@ const GET_ALL_ADMIN_ACCOUNT = async (req,res) => {
                 data:getAllAdmin
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         return res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message: err.message
+                message: "Failed to find admin accounts"
             }
         })
     }
@@ -204,10 +187,10 @@ const GET_ALL_ADMIN_ACCOUNT = async (req,res) => {
 const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
     try {
         const {_id} = req.params
-        const findAdminAccount = await User.find({_id:_id})
+        const findAdminAccount = await User.findOne({_id:_id})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find admin account");
         })
 
         if(!findAdminAccount) {
@@ -215,7 +198,7 @@ const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
                 status:"FAILED",
                 statusCode:400,
                 response:{
-                    message:"Failed to find admin account"
+                    message:"Admin account not found"
                 }
             })
         }
@@ -228,12 +211,13 @@ const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
                 data:findAdminAccount
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         return res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message:err.message,
+                message:"Failed to find admin account",
             }
         })
     }
@@ -242,11 +226,11 @@ const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
 const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
     try {
         const {comapanyUserId} = req.params
-        const findCompanyAccount = await Company.find({userId:comapanyUserId})
+        const findCompanyAccount = await Company.findOne({userId:comapanyUserId})
         .populate('userId')
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find company account");
         })
 
         if(!findCompanyAccount) {
@@ -254,7 +238,7 @@ const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
                 status:"FAILED",
                 statusCode:400,
                 response:{
-                    message:"Failed to find admin account"
+                    message:"Comapany account do not exist"
                 }
             })
         }
@@ -267,12 +251,13 @@ const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
                 data:findCompanyAccount
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error);
         return res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message:err.message,
+                message:"Failed to find company account"
             }
         })
     }
@@ -283,15 +268,15 @@ const GET_ALL_COMPANY_ACCOUNT = async (req,res) => {
         const fetchAllCompanyData = await Company.find({roleId:"2"}).populate('userId')
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find company account");
         })
 
-        if (!fetchAllCompanyData) {
+        if (!fetchAllCompanyData || fetchAllCompanyData.length === 0) {
             return res.send({
                 status:"FAILED",
                 statusCode:400,
                 response:{
-                    message:"Failed to get all accounts"
+                    message:"No company account found"
                 }
             })
         }
@@ -304,12 +289,13 @@ const GET_ALL_COMPANY_ACCOUNT = async (req,res) => {
                 data:fetchAllCompanyData
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error);
         return res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message: err.message
+                message: "Failed to find company account"
             }
         })
     }
@@ -322,7 +308,7 @@ const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
         const updateAdminAccount = await User.findByIdAndUpdate(adminUserId, {email: email, password: password})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find and update admin account");
         })
 
         if(!updateAdminAccount){
@@ -330,7 +316,7 @@ const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
                 status:"FAILED",
                 statusCode:400,
                 response:{
-                    message:"Failed to Update account"
+                    message:"Admin account do not exist"
                 }
             })
         }
@@ -343,12 +329,13 @@ const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
             }
         }) 
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message:err.message
+                message:"Failed to find and update admin account"
             }
         })
     }
@@ -358,11 +345,9 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
-        const {companyAdminId} = req.params
+        const {companyUserId} = req.params
         const updateUser = {
-            email: req.body.email,
             password: req.body.password,
-            roleId: req.body.roleId
         }
 
         const registerCompany = {
@@ -371,56 +356,45 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
             contactNumber: req.body.contactNumber
         }
         
-        const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const hashPassword = bcrypt.hashSync(updateUser.password, saltRounds)
 
-        const updateCompanyUserAccount = await User.findByIdAndUpdate(companyAdminId, [{$set: {
-            email:updateUser.email, 
+        const updateCompanyUserAccount = await User.findByIdAndUpdate(companyUserId, [{$set: {
             password:hashPassword, 
-            roleId: updateUser.roleId, 
 
         }}], {session})
         .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to update company account");
         })
         
-        if(!updateCompanyUserAccount){
+        //run this user if does not upload new picture
+        if(!req.file){
+            await Company.findOneAndUpdate({
+                userId: companyUserId
+                },[{$set: {
+                    ...registerCompany,
+                }}], {session})
+            .catch((error) =>{
+                throw new Error("Failed to update company account");
+            })
             return res.send({
-                status:"FAILED",
-                statusCode:400,
+                status:"SUCCESS",
+                statusCode:200,
                 response:{
-                    message:"Failed to Update Account"
+                    message:"Account Updated Successfully"
                 }
             })
         }
-
-        const updateCompanyAccount = await Company.findOneAndUpdate({
-            userId: updateCompanyUserAccount._id
-            },[{$set: {
+        
+        //run this code if user upload new picture
+        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        const updateCompanyAccount = await Company.findOneAndUpdate({userId: updateCompanyUserAccount._id},[{
+            $set: {
                 ...registerCompany,
                 imageUrl: uploadImage.url,
             }}], {session})
-            .catch((error) =>{
-                console.error(error);
-                return res.send({
-                    status: "FAILED",
-                    statusCode: 500,
-                    response: {
-                        message: error.message
-                    }
-                });
-            })
-
-        if(!updateCompanyAccount){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to Update Account"
-                }
-            })
-        }
+        .catch((error) =>{
+            throw new Error("Failed to update company account");
+        })
 
         res.send({
             status:"SUCCESS",
@@ -431,12 +405,13 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
         })
         await session.commitTransaction();
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message:err.message
+                message:"Failed to update company account"
             }
         })
         await session.abortTransaction();

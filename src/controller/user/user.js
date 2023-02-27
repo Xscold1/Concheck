@@ -111,7 +111,7 @@ const LOGIN = async (req, res) => {
 
         }
         
-    } catch (err) {
+    } catch (error) {
         res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,

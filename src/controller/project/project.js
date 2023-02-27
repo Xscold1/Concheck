@@ -34,18 +34,8 @@ const ADD_TASK = async (req, res) => {
             projectId: _id,
         }).catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to add task");
         })
-        
-        if(!addTask){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to add task"
-                }
-            })
-        }
 
         res.send({
             status:"SUCCESS",
@@ -55,12 +45,13 @@ const ADD_TASK = async (req, res) => {
                 }
             })
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error);
         res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message:err.message
+                message:"Failed to add task"
             }
         })
     }
@@ -80,18 +71,8 @@ const ADD_DAILY_REPORT = async (req,res)=>{
             date:Date.now()
         }).catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to create DailyReport");
         })
-
-        if(!insertDailyReport){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to insert daily report"
-                }
-            })
-        }
 
         res.send({
             status:"SUCCESS",
@@ -101,12 +82,13 @@ const ADD_DAILY_REPORT = async (req,res)=>{
             }
         })
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error);
         res.send({
             status:"Internal Server Error",
             statusCode:500,
             response:{
-                message:err.message
+                message:"Failed to insert daily report"
             }
         })
     }
@@ -120,7 +102,7 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
         const timeFormat = 'HH:mm';
         const dateFormat = 'dd-MM-yyyy'
         const {_id} = req.params
-        const {email , password , startShift, endShift, dailyRate} = req.body
+        const {email , password , startShift, endShift, dailyRate, firstName, lastName} = req.body
 
         const endShiftParse = parse(endShift, timeFormat, new Date());
         const startShiftParse = parse(startShift,timeFormat, new Date());
@@ -152,16 +134,14 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
         }], {session})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to create crew account");
         })
-
-        if(!createCrewUserAccount){
-            throw new Error("Failed to create account")
-        }
 
         let id = createCrewUserAccount.map(a => a._id)
 
         const createCrewAccount = await Crew.create([{
+            firstName: firstName,
+            lastName: lastName,
             dailyRate:dailyRate,
             startShift:startShift,
             endShift:endShift,
@@ -171,12 +151,8 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
         }], {session})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to create crew account");
         })
-
-        if(!createCrewAccount){
-            throw new Error("Failed to create account")
-        }
 
         res.send({
             status:"SUCCESS",
@@ -186,8 +162,8 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             }
         })
         session.commitTransaction()
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error(error);
         res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
@@ -205,6 +181,9 @@ const UPLOAD_IMAGE = async (req,res)=>{
         const {_id} = req.params
         const images = req.files;
         const captions = req.body.caption;
+
+        const now = new Date();
+        const date = format(now, 'yyyy-MM-dd');
         // Iterate over the uploaded images and captions
         for (let i = 0; i < images.length; i++) {
             const image = images[i];
@@ -219,19 +198,13 @@ const UPLOAD_IMAGE = async (req,res)=>{
                 imageUrl: result.url,
                 caption: caption,
                 projectId: _id,
-                date: Date.now()
+                date: date
             });
 
             newImage.save()
             .catch((error) =>{
                 console.error(error);
-                return res.send({
-                    status: "FAILED",
-                    statusCode: 500,
-                    response: {
-                        message: error.message
-                    }
-                });
+                throw new Error("Failed to save images")
             })
     }
       
@@ -243,12 +216,13 @@ const UPLOAD_IMAGE = async (req,res)=>{
             }
         })
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error);
         res.send({
             status:"Internal Server Error",
             statusCode:500,
             response:{
-                message:err.message
+                message:"Failed to save images"
             }
         })
     }
@@ -261,21 +235,11 @@ const GET_ALL_TASK = async (req, res)=>{
         const fetchAlltask = await Task.find({projectId: _id})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find Task");
         })
         
         
         if(fetchAlltask.length === 0){
-            return res.send({
-                status:"SUCCESS",
-                statusCode:200,
-                response:{
-                    message:"No task Found"
-                }
-            })
-        }
-
-        if(!fetchAlltask){
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -293,12 +257,13 @@ const GET_ALL_TASK = async (req, res)=>{
                 data: fetchAlltask
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         res.send({
             status:"Internal Server Error",
             statusCode:500,
             response:{
-                message:err.message
+                message:"Failed to find tasks"
             }
         })
     }
@@ -311,7 +276,7 @@ const GET_PROJECT_BY_ID = async (req, res) => {
         const fetchProjectDetails = await Project.findById(_id)
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("An error occurred while fetching project");
         })
 
         if(!fetchProjectDetails) {
@@ -332,12 +297,13 @@ const GET_PROJECT_BY_ID = async (req, res) => {
                 data:fetchProjectDetails
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         res.send({
             status:"Internal Server Error",
             statusCode:500,
             response:{
-                message:err.message
+                message:"An error occurred while fetching project"
             }
         })
     }
@@ -349,7 +315,7 @@ const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
         const fetchAllCrew = await Crew.find({projectId:_id}).populate('userId')
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("An error occurred while fetching crew accounts");
         })
 
         if(fetchAllCrew.length === 0 ){
@@ -358,15 +324,6 @@ const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
                 statusCode:200,
                 response:{
                     message:"No Crew Found"
-                }
-            })
-        }
-        if(!fetchAllCrew){
-            return res.send({
-                status:"Failed",
-                statusCode:400,
-                response:{
-                    message:"Failed to get crew details"
                 }
             })
         }
@@ -379,12 +336,13 @@ const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
                 data: fetchAllCrew
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         res.send({
             status:"Internal Server Error",
             statusCode:500,
             response:{
-                message:err.message
+                message:"An error occurred while fetching crew accounts"
             }
         })
     }
@@ -393,10 +351,10 @@ const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
 const GET_DAILY_REPORT_BY_ID = async (req, res) => {
     try {
         const {_id} = req.params
-        const fetchDailyReport = await DailyReport.find({_id}).populate('taskId')
+        const fetchDailyReport = await DailyReport.findOne({_id}).populate('taskId')
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("An error occurred while fetching daily report");
         })
 
         if(!fetchDailyReport){
@@ -404,7 +362,7 @@ const GET_DAILY_REPORT_BY_ID = async (req, res) => {
                 status:"Failed",
                 statusCode:400,
                 response:{
-                    message:"Failed to fetch daily report"
+                    message:"No daily report found"
                 }
             })
         }
@@ -417,12 +375,13 @@ const GET_DAILY_REPORT_BY_ID = async (req, res) => {
                 data: fetchDailyReport
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error);
         res.send({
             status:"Internal Server Error",
             statusCode:500,
             response:{
-                message:err.message
+                message:"An error occurred while fetching daily report",
             }
         })
     }
@@ -431,10 +390,10 @@ const GET_DAILY_REPORT_BY_ID = async (req, res) => {
 const GET_TASK_BY_ID = async (req, res) => {
     try {
         const {taskId} = req.params
-        const findTask = await Task.find({_id:taskId})
+        const findTask = await Task.findOne({_id:taskId})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("An error occurred while fetching task");
         })
 
         if(!findTask){
@@ -455,12 +414,13 @@ const GET_TASK_BY_ID = async (req, res) => {
                 data:findTask
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message:err.message
+                message:"An error occurred while fetching tasks",
             }
         })
     }
@@ -473,7 +433,7 @@ const GET_ALL_DAILY_REPORT_BY_PROJECT = async (req, res) => {
         const findAllDailyReport = await DailyReport.find({projectId:projectId})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("An Error occurred while fetching daily reports");
         })
 
         if(!findAllDailyReport.length === 0){
@@ -493,12 +453,13 @@ const GET_ALL_DAILY_REPORT_BY_PROJECT = async (req, res) => {
             }
         })
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         return res.send({
             status:"INTERNAL SERVER ERROR",
             status:500,
             response:{
-                message:err.message,
+                message:"An error occurred while fetching daily report"
             }
         })
     }
@@ -508,10 +469,11 @@ const EDIT_TASK = async (req, res) => {
     try {
         const {taskId} = req.params
         const {taskName, startDate, endDate} = req.body
-        const findTask = await Task.findByIdAndUpdate({_id: taskId},{$set:{taskName:taskName, startDate:startDate, endDate}})
+
+        const findTask = await Task.findByIdAndUpdate({_id: taskId},{$set:{taskName:taskName, startDate:startDate, endDate:endDate}})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("An error occurred while updating task");
         })
 
         if(!findTask){
@@ -519,10 +481,11 @@ const EDIT_TASK = async (req, res) => {
                 status:"FAILED",
                 statusCode:400,
                 response:{
-                    message:"Failed to update task"
+                    message:"Task does not exist"
                 }
             })
         }
+
         res.send({
             status:"SUCCESS",
             statusCode:200,
@@ -531,12 +494,13 @@ const EDIT_TASK = async (req, res) => {
             }
         })
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message:err.message
+                message:"An error occurred while updating task"
             }
         })
     }
@@ -555,7 +519,7 @@ const EDIT_DAILY_REPORT = async (req, res) => {
         })
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("An error occurred while updating daily report");
         })
 
         if(!updateDailyReport){
@@ -563,7 +527,7 @@ const EDIT_DAILY_REPORT = async (req, res) => {
                 status:"FAILED",
                 statusCode:400,
                 response:{
-                    message:"Failed to update daily report"
+                    message:"Daily report does not exist"
                 }
             })
         }
@@ -575,12 +539,13 @@ const EDIT_DAILY_REPORT = async (req, res) => {
                 message:"Update Successfully"
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         res.send({
             status:"INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                message:err.message
+                message:"An error occurred while updating daily report"
             }
         })
     }
@@ -595,10 +560,10 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
         const date = format(now, 'yyyy-MM-dd');
         const timeIn = format(now, 'HH:mm:ss');
         // Get all the CSV data from the database
-        const csvData = await Csv.find({projectId: projectId})
+        const csvData = await Csv.find({projectId: projectId}).populate('projectId')
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("An error occurred while fetching csv data from the database");
         })
 
 
@@ -621,7 +586,7 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
 
         // Create the CSV writer with the defined headers
         const csvWriter = createCsvWriter({
-            path: path.join(DOWNLOAD_DIR, `${date}-crewRecord.csv`),
+            path: path.join(DOWNLOAD_DIR, `${date}-crewRecord.csv - ${csvData.projectId.projectName}`),
             header: csvHeaders
         });
 
@@ -629,7 +594,7 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
         await csvWriter.writeRecords(csvData)
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("An error occurred while fetching csv data from the database");
         })
 
         return res.send({
@@ -652,7 +617,6 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
         })
     }
 }
-
 
 module.exports = {
     ADD_TASK,

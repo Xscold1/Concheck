@@ -21,7 +21,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
     try {
         session.startTransaction();
         const {crewUserId} = req.params
-        const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        
         const crewInputInfo = {
             firstName: req.body.firstName,
             lastName: req.body.lastName,
@@ -49,7 +49,17 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 }
             })
         }
-        
+        if(!req.file){
+            const updateCrewAccountDetails = await Crew.findOneAndUpdate({userId: crewUserId}, {$set:{
+                ...crewInputInfo,
+            }
+            }).populate('userId')
+            .catch((error) =>{
+                console.error(error);
+                throw new Error("Failed To Update Account Details");
+            })
+        }
+        const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const updateCrewAccountDetails = await Crew.findOneAndUpdate({userId: crewUserId}, {$set:{
                 ...crewInputInfo,
                 imageUrl: uploadImage.url
@@ -57,18 +67,9 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
         }).populate('userId')
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed To Update Account Details");
         })
         
-        if(!updateCrewAccountDetails){
-            return res.send({
-                status: "FAILED",
-                statusCode:400,
-                response:{
-                    messsage: "Failed to update crew Account Details"
-                }
-            })
-        }
 
         res.send({
             status: "Success",
@@ -77,12 +78,13 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 messsage: "Successfully Updated Account Details"
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error);
         return res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: err.message
+                messsage: "Failed To Update Account Details"
             }
         })
     }
@@ -111,7 +113,7 @@ const TIMEIN = async (req, res) =>{
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find Existing Dtr");
         })
 
         if(existingDtr){
@@ -125,19 +127,12 @@ const TIMEIN = async (req, res) =>{
         }
         
         const newCrewTimeIn = new Dtr({timeIn: timeIn, date: date, crewId: crewId, dayToday: daysInWeek[now.getDay()]})
-        
 
         await newCrewTimeIn.save()
-
-        if(!newCrewTimeIn){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to timein"
-                }
-            })
-        }
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("Failed to find Existing Dtr");
+        })
 
         res.send({
             status:"SUCCESS",
@@ -147,12 +142,13 @@ const TIMEIN = async (req, res) =>{
             }
         })
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error);
         return res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: err.message
+                messsage: "Failed to create time in record"
             }
         })
     }
@@ -172,16 +168,28 @@ const TIMEOUT = async (req, res) =>{
         const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId}).populate('crewId')
         .catch((error) =>{
             console.error(error);
-            throw new Error("Error in Fiding Dtr Record");
+            throw new Error("Error in Finding Dtr Record");
         })
 
         if(!checkIfTimeInExist){
-            throw ("No Time in Record Exist ")
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Dtr do not exist"
+                }
+            })
         }
 
         //check if the crew has already time out for the day
-        if(checkIfTimeInExist.timeOut === {}){
-            throw ("Already Time out for today")
+        if(checkIfTimeInExist.timeOut){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Already time out for today"
+                }
+            })
         }
 
         //parse date and time for computation
@@ -214,10 +222,6 @@ const TIMEOUT = async (req, res) =>{
             throw new Error("Failed While updating Dtr");
         })
 
-        if(!updateDtr){
-            throw("Failed to update Dtr record")
-        }
-
         //check if there is already a csv already has the crewId
         const csvRecord = await Csv.findOne({ crewId: crewId })
         .catch((error) =>{
@@ -242,23 +246,13 @@ const TIMEOUT = async (req, res) =>{
                 [checkIfTimeInExist.dayToday]: hoursOfWork > 4 ?  1 : 0.5,
                 totalHoursWork: csvRecord.totalHoursWork ? csvRecord.totalHoursWork + parseInt(hoursOfWork) : parseInt(hoursOfWork),
                 totalOverTimeHours:csvRecord.totalOverTimeHours ? csvRecord.totalOverTimeHours + parseInt(totalOverTime) : parseInt(totalOverTime),
-                totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + paraseInt(totalHoursOfLate) : paraseInt(totalHoursOfLate),
+                totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + parseInt(totalHoursOfLate) : parseInt(totalHoursOfLate),
                 weeklySalary: csvRecord.weeklySalary ? csvRecord.weeklySalary + weeklySalary : weeklySalary
             }})
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Failed to create Crew account");
             })
-
-            if(!updateCsvRecord){
-                return res.send({
-                    status: "FAILED",
-                    statusCode: 400,
-                    response: {
-                        message: "Failed to update CSV Record"
-                    }
-                })
-            }
         }
         
         res.send({
@@ -275,7 +269,7 @@ const TIMEOUT = async (req, res) =>{
             status: "INTERNAL_SERVER_ERROR",
             statusCode:500,
             response:{
-                messsage: err.message
+                messsage: "Failed to time out"
             }
         })
     }
@@ -283,14 +277,23 @@ const TIMEOUT = async (req, res) =>{
 
 const GET_CREW_BY_ID = async (req, res) => {
     try {
-        const {_id} = req.params
+        const {crewId} = req.params
 
-        const fetchCrewDetails = await Crew.findById(_id).populate('userId')
+        const fetchCrewDetails = await Crew.findById(crewId).populate('userId')
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find crew account details");
         })
 
+        if(!fetchCrewDetails){
+            return res.send({
+                status: "FAILED",
+                statusCode:500,
+                response:{
+                    message:"Account does not exist",
+                }
+            })
+        }
         res.send({
             status: "SUCCESS",
             statusCode:200,
@@ -300,12 +303,13 @@ const GET_CREW_BY_ID = async (req, res) => {
             }
         })
         
-    } catch (err) {
+    } catch (error) {
+        console.error(error)
         return res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: err.message
+                messsage: "Failed to find crew account details"
             }
         })
     }

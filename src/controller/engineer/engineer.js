@@ -32,7 +32,7 @@ const CREATE_PROJECT = async (req, res) => {
         const checkProjecifExist = await Project.findOne({projectName: createProjectInfo.projectName})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to find project");
         })
 
         if(checkProjecifExist){
@@ -51,18 +51,8 @@ const CREATE_PROJECT = async (req, res) => {
         })
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to create project");
         })
-
-        if(!createProject){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message: "Failed to create project"
-                }
-            })
-        }
 
         res.send({
             status:"SUCCESS",
@@ -72,12 +62,13 @@ const CREATE_PROJECT = async (req, res) => {
             }
         })
 
-    } catch (err) {
+    } catch (error) {
+        console.error(error);
         return res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: err.message
+                messsage: "Failed to create project"
             }
         })
     }
@@ -86,11 +77,10 @@ const CREATE_PROJECT = async (req, res) => {
 const GET_ALL_PROJECT = async (req, res) => {
     try {
         const {projectEngineer} = req.params
-        console.log(projectEngineer)
         const fetchAllProject = await Project.find({projectEngineer: projectEngineer})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to to find project");
         })
 
         if(!fetchAllProject){
@@ -111,12 +101,14 @@ const GET_ALL_PROJECT = async (req, res) => {
                 data:fetchAllProject
             }
         })
-    } catch (err) {
+
+    } catch (error) {
+        console.error(error)
         return res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: err.message
+                messsage: "Failed to create project"
             }
         })
     }
@@ -133,32 +125,25 @@ const EDIT_PROJECT = async (req, res) => {
             budget:req.body.budget,
         }
 
+        if(!req.file){
+            const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
+                $set:{
+                    ...createProjectInfo,
+                }}).catch((error) =>{
+                    console.error(error);
+                    throw new Error("Failed to Update Project");
+                })
+        }
+
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
-        
         const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
             $set:{
                 ...createProjectInfo,
                 imageUrl:uploadImage.Url
             }}).catch((error) =>{
                 console.error(error);
-                return res.send({
-                    status: "FAILED",
-                    statusCode: 500,
-                    response: {
-                        message: error.message
-                    }
-                });
+                throw new Error("Failed to Update Project");
             })
-
-        if(!findAndUpdateProject){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to update Project"
-                }
-            })
-        }
         
         res.send({
             status:"SUCCESS",
@@ -167,12 +152,13 @@ const EDIT_PROJECT = async (req, res) => {
                 message:"Update Successfully"
             }
         })
-    } catch (err) {
+    } catch (error) {
+        console.error(error);
         return res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: err.message
+                messsage: "Failed to Update Project"
             }
         })
     }
@@ -184,7 +170,7 @@ const DELETE_PROJECT = async (req, res) => {
         const findByIdAndDelete = await Project.findByIdAndDelete(_id)
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Failed to delete project");
         })
 
         if(!findByIdAndDelete){
@@ -192,7 +178,7 @@ const DELETE_PROJECT = async (req, res) => {
                 status: "FAILED",
                 statusCode:400,
                 response:{
-                    messsage: "Failed to delete Project"
+                    messsage: "Project do not exist"
                 }
             })
         }
@@ -205,11 +191,12 @@ const DELETE_PROJECT = async (req, res) => {
             }
         })
     } catch (error) {
+        console.error(error);
         return res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: err.message
+                messsage: "Failed to delete project"
             }
         })
     }
