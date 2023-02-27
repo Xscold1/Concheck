@@ -33,7 +33,11 @@ const crewSchema = new Schema({
         required: true
     },
 
-    rate:{
+    dailyRate:{
+        type:Number,
+        required: true
+    },
+    hourlyRate:{
         type:Number,
         required: true
     },

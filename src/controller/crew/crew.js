@@ -40,14 +40,8 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
 
         const updatePassword = await User.findOneAndUpdate(userAccountDetails._id,{password:hashPassword})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed To Update Account Details");
         })
 
         if(!updatePassword){
@@ -66,14 +60,8 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             }
         }).populate('userId')
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         }).exec()
         
         if(!updateCrewAccountDetails){
@@ -126,14 +114,8 @@ const TIMEIN = async (req, res) =>{
         
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(existingDtr){
@@ -150,14 +132,8 @@ const TIMEIN = async (req, res) =>{
         
 
         await newCrewTimeIn.catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         }).save()
 
         if(!newCrewTimeIn){
@@ -202,14 +178,8 @@ const TIMEOUT = async (req, res) =>{
         //update Dtr to accept Timeout and be use
         const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId}).populate('crewId')
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!checkIfTimeInExist){
@@ -232,42 +202,22 @@ const TIMEOUT = async (req, res) =>{
             })
         }
 
-        //parase time in time out for computation
         const timeInParse = parse(checkIfTimeInExist.timeIn, timeFormat, new Date());
         const timeOutParse = parse(timeOut, timeFormat, new Date());
-
-        //compute tottal work hours
-        const timeDiffMs = timeOutParse.getTime() - timeInParse.getTime();
-        const hoursOfWork = timeDiffMs / 3600000;
-        
-        //compute total late hours
         const startShiftParse = parse(checkIfTimeInExist.crewId.startShift, timeFormat, new Date());
-        const lateHoursComputation = timeInParse.getTime() - startShiftParse.getTime()
-
-        //compute overTime 
         const endShiftParse = parse(checkIfTimeInExist.crewId.endShift, timeFormat, new Date());
-        const overTimeHoursComputation = endShiftParse.getTime() - timeOutParse.getTime() 
 
-        //compute so that the overtime hours is not in milliseconds but in hours
-        const overTime = overTimeHoursComputation/ 3600000
-        const hoursLate = lateHoursComputation/ 3600000
+        const hoursOfWork = ((timeOutParse.getTime() - timeInParse.getTime()) / 3600000).toFixed(1);
 
-        const parseOverTime = parseInt(overTime)
-        const parseHoursLate = parseInt(hoursLate)
-        const parseHoursOfWork = parseInt(hoursOfWork)
+        const hoursLate = ((timeInParse.getTime() - startShiftParse.getTime()) / 3600000).toFixed(1);
 
-        //fixed the decimal to 1 decimal only
-        let totalHoursOfLate = parseHoursLate.toFixed(1)
-        if(totalHoursOfLate === NaN || totalHoursOfLate < 0){
-            totalHoursOfLate = 0
-        }
-        
-        let totalOverTime = parseOverTime.toFixed(1)
-        if(totalOverTime === NaN || totalOverTime < 0){
-            totalOverTime = 0
-        }
+        const overTime = ((endShiftParse.getTime() - timeOutParse.getTime()) / 3600000).toFixed(1);
 
-        let hourseOfWork = parseHoursOfWork.toFixed(1)
+
+        const totalHoursOfLate = isNaN(hoursLate) || hoursLate < 0 ? 0 : hoursLate;
+        const totalOverTime = isNaN(overTime) || overTime < 0 ? 0 : overTime;
+        const hourseOfWork = parseInt(hoursOfWork).toFixed(1);
+
         //update the dtr of crew
 
         const updateDtr = await Dtr.updateOne({crewId: crewId},
@@ -278,14 +228,8 @@ const TIMEOUT = async (req, res) =>{
                 hoursOfOverTimeToday: totalOverTime
             }})
             .catch((error) =>{
-                console.error;
-                return res.send({
-                    status: "FAILED",
-                    statusCode: 500,
-                    response: {
-                        message: error.message
-                    }
-                });
+                console.error(error);
+                throw new Error("Failed to create Crew account");
             })
 
         if(!updateDtr){
@@ -301,14 +245,8 @@ const TIMEOUT = async (req, res) =>{
         //check if there is already a csv already has the crewId
         const csvRecord = await Csv.findOne({ crewId: crewId })
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
         if (!csvRecord) {
             // If the CSV record doesn't exist, create a new one
@@ -320,7 +258,7 @@ const TIMEOUT = async (req, res) =>{
                 totalHoursWork:hourseOfWork,
                 totalOverTimeHours: totalOverTime,
                 totalLateHours: totalHoursOfLate,
-                rate: checkIfTimeInExist.crewId.rate,
+                hourlyRate: checkIfTimeInExist.crewId.hourlyRate,
                 weeklySalary: 0
                 
             });
@@ -335,25 +273,21 @@ const TIMEOUT = async (req, res) =>{
                 totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + totalHoursOfLate : totalHoursOfLate
             }})
             .catch((error) =>{
-                console.error;
+                console.error(error);
+                throw new Error("Failed to create Crew account");
+            })
+
+            if(!updateCsvRecord){
                 return res.send({
                     status: "FAILED",
-                    statusCode: 500,
+                    statusCode: 400,
                     response: {
-                        message: error.message
+                        message: "Failed to update CSV Record"
                     }
-                });
-            })
+                })
+            }
         }
-        if(!updateCsvRecord){
-            return res.send({
-                status: "FAILED",
-                statusCode: 400,
-                response: {
-                    message: "Failed to update CSV Record"
-                }
-            })
-        }
+        
         res.send({
             status:"SUCCESS",
             statusCode:200,
@@ -379,14 +313,8 @@ const GET_CREW_BY_ID = async (req, res) => {
 
         const fetchCrewDetails = await Crew.findById(_id).populate('userId')
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         res.send({

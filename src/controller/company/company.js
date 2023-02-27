@@ -41,14 +41,8 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
 
         const checkEmailIfExists = await User.findOne({email: userAccountInput.email})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
         
         if(checkEmailIfExists) {
@@ -70,14 +64,8 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             
         }], { session })
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!registerUser){
@@ -99,14 +87,8 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             companyId: _id
         }], { session })
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!registerEngineer){
@@ -148,14 +130,8 @@ const GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY = async (req, res)=>{
         const {_id} = req.params
         const fetchAllEngineerData = await Engineer.find({companyId:_id}).populate('userId')
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if (!fetchAllEngineerData) {
@@ -191,14 +167,8 @@ const GET_ENGINEER_ACCOUNT_BY_ID = async (req,res) => {
         const {_id} = req.params
         const findEngineerAccount = await Engineer.find({userId:_id}).populate('userId')
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!findEngineerAccount) {
@@ -255,7 +225,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
                 password: hashPassword
             }}], {session})
             .catch((error) =>{
-                console.error;
+                console.error(error);
                 return res.send({
                     status: "FAILED",
                     statusCode: 500,
@@ -282,7 +252,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
                 imageUrl: uploadImage.url
             }}], {session})
             .catch((error) =>{
-                console.error;
+                console.error(error);
                 return res.send({
                     status: "FAILED",
                     statusCode: 500,

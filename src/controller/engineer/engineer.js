@@ -31,14 +31,8 @@ const CREATE_PROJECT = async (req, res) => {
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const checkProjecifExist = await Project.findOne({projectName: createProjectInfo.projectName})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(checkProjecifExist){
@@ -56,14 +50,8 @@ const CREATE_PROJECT = async (req, res) => {
             imageUrl: uploadImage.url
         })
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!createProject){
@@ -101,14 +89,8 @@ const GET_ALL_PROJECT = async (req, res) => {
         console.log(projectEngineer)
         const fetchAllProject = await Project.find({projectEngineer: projectEngineer})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!fetchAllProject){
@@ -158,7 +140,7 @@ const EDIT_PROJECT = async (req, res) => {
                 ...createProjectInfo,
                 imageUrl:uploadImage.Url
             }}).catch((error) =>{
-                console.error;
+                console.error(error);
                 return res.send({
                     status: "FAILED",
                     statusCode: 500,
@@ -201,14 +183,8 @@ const DELETE_PROJECT = async (req, res) => {
         const {_id} = req.params
         const findByIdAndDelete = await Project.findByIdAndDelete(_id)
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!findByIdAndDelete){

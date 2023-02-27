@@ -18,14 +18,8 @@ const LOGIN = async (req, res) => {
 
         const checkEmail = await User.findOne({email: email})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if (!checkEmail){
@@ -67,7 +61,7 @@ const LOGIN = async (req, res) => {
         }else if(checkEmail.roleId === "2"){
 
             const fetchCompanyInfo = await Company.findOne({userId:checkEmail._id }).populate('userId').catch((error) =>{
-                console.error;
+                console.error(error);
                 return res.send({
                     status: "FAILED",
                     statusCode: 500,
@@ -89,7 +83,7 @@ const LOGIN = async (req, res) => {
 
         }else if(checkEmail.roleId === "3"){
             const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail._id  }).populate('userId').catch((error) =>{
-                console.error;
+                console.error(error);
                 return res.send({
                     status: "FAILED",
                     statusCode: 500,
@@ -110,7 +104,7 @@ const LOGIN = async (req, res) => {
 
         }else if (checkEmail.roleId === "4"){
             const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  }).populate('userId').catch((error) =>{
-                console.error;
+                console.error(error);
                 return res.send({
                     status: "FAILED",
                     statusCode: 500,

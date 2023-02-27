@@ -32,14 +32,8 @@ const ADD_TASK = async (req, res) => {
             endDate:endDate,
             projectId: _id,
         }).catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
         
         if(!addTask){
@@ -84,14 +78,8 @@ const ADD_DAILY_REPORT = async (req,res)=>{
             projectId: projectId,
             date:Date.now()
         }).catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!insertDailyReport){
@@ -128,19 +116,20 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
     try {
 
         session.startTransaction()
+        const timeFormat = 'HH:mm';
+        const dateFormat = 'dd-MM-yyyy'
         const {_id} = req.params
-        const {email , password , rate, startShift, endShift} = req.body
+        const {email , password , startShift, endShift, dailyRate} = req.body
+
+        const endShiftParse = parse(endShift, timeFormat, new Date());
+        const startShiftParse = parse(startShift,timeFormat, new Date());
+        
+        let hourlyRate =  dailyRate /  (((endShiftParse.getTime() - startShiftParse.getTime())/3600000) - 1);
 
         const checkEmailIfExists = await User.findOne({email:email})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(checkEmailIfExists){
@@ -152,7 +141,6 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
                 }
             })
         }
-
         
         const hashPassword = bcrypt.hashSync(password, saltRounds)
 
@@ -162,54 +150,31 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             roleId:"4"
         }], {session})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!createCrewUserAccount){
-            return res.send({
-                status: "FAILED",
-                statusCode:400,
-                response:{
-                    messsage: "Failed to create account"
-                }
-            })
+            throw new Error("Failed to create account")
         }
 
         let id = createCrewUserAccount.map(a => a._id)
 
         const createCrewAccount = await Crew.create([{
-            rate:rate,
+            dailyRate:dailyRate,
             startShift:startShift,
             endShift:endShift,
             userId:id[0],
-            projectId:_id
+            projectId:_id,
+            hourlyRate: hourlyRate.toFixed(2),
         }], {session})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!createCrewAccount){
-            return res.send({
-                status: "FAILED",
-                statusCode:400,
-                response:{
-                    messsage: "Failed to create account"
-                }
-            })
+            throw new Error("Failed to create account")
         }
 
         res.send({
@@ -221,11 +186,12 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
         })
         session.commitTransaction()
     } catch (err) {
+        console.error(err);
         res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: err.message
+                messsage: "An error occurred while creating account"
             }
         })
         await session.abortTransaction()
@@ -257,7 +223,7 @@ const UPLOAD_IMAGE = async (req,res)=>{
 
             newImage.save()
             .catch((error) =>{
-                console.error;
+                console.error(error);
                 return res.send({
                     status: "FAILED",
                     statusCode: 500,
@@ -293,14 +259,8 @@ const GET_ALL_TASK = async (req, res)=>{
 
         const fetchAlltask = await Task.find({projectId: _id})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
         
         
@@ -349,14 +309,8 @@ const GET_PROJECT_BY_ID = async (req, res) => {
 
         const fetchProjectDetails = await Project.findById(_id)
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!fetchProjectDetails) {
@@ -393,14 +347,8 @@ const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
         const {_id} = req.params
         const fetchAllCrew = await Crew.find({projectId:_id}).populate('userId')
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(fetchAllCrew.length === 0 ){
@@ -446,14 +394,8 @@ const GET_DAILY_REPORT_BY_ID = async (req, res) => {
         const {_id} = req.params
         const fetchDailyReport = await DailyReport.find({_id}).populate('taskId')
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!fetchDailyReport){
@@ -490,14 +432,8 @@ const GET_TASK_BY_ID = async (req, res) => {
         const {taskId} = req.params
         const findTask = await Task.find({_id:taskId})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!findTask){
@@ -535,14 +471,8 @@ const GET_ALL_DAILY_REPORT_BY_PROJECT = async (req, res) => {
 
         const findAllDailyReport = await DailyReport.find({projectId:projectId})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!findAllDailyReport.length === 0){
@@ -579,14 +509,8 @@ const EDIT_TASK = async (req, res) => {
         const {taskName, startDate, endDate} = req.body
         const findTask = await Task.findByIdAndUpdate({_id: taskId},{$set:{taskName:taskName, startDate:startDate, endDate}})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!findTask){
@@ -629,14 +553,8 @@ const EDIT_DAILY_REPORT = async (req, res) => {
                 hoursDelay:hoursDelay}
         })
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!updateDailyReport){
@@ -680,14 +598,8 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
         // Get all the CSV data from the database
         const csvData = await Csv.find({projectId})
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         if(!csvData){
@@ -722,14 +634,8 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
         // Write the CSV data to the file
         await csvWriter.writeRecords(csvData)
         .catch((error) =>{
-            console.error;
-            return res.send({
-                status: "FAILED",
-                statusCode: 500,
-                response: {
-                    message: error.message
-                }
-            });
+            console.error(error);
+            throw new Error("Failed to create Crew account");
         })
 
         return res.send({
@@ -742,7 +648,7 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
         
 
     } catch (error) {
-        console.error(error);
+        console.error(error)(error);
         return res.send({
             status: 'INTERNAL SERVER ERROR',
             statusCode: 500,
