@@ -37,13 +37,10 @@ const crewSchema = new Schema({
         type:Number,
         required: true
     },
+    
     hourlyRate:{
         type:Number,
         required: true
-    },
-
-    earnings: {
-        type: Number,
     },
 
     projectId: {

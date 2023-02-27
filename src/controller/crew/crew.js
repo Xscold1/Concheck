@@ -20,7 +20,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
     const session = await conn.startSession();
     try {
         session.startTransaction();
-        const {crewId} = req.params
+        const {crewUserId} = req.params
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const crewInputInfo = {
             firstName: req.body.firstName,
@@ -34,7 +34,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
         }
         const hashPassword = bcrypt.hashSync(userAccountDetails.password, saltRounds)
 
-        const updatePassword = await User.findOneAndUpdate(crewId,{password:hashPassword})
+        const updatePassword = await User.findOneAndUpdate(crewUserId,{password:hashPassword})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed To Update Account Details");
@@ -50,7 +50,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             })
         }
         
-        const updateCrewAccountDetails = await Crew.findOneAndUpdate({userId: userAccountDetails._id}, {$set:{
+        const updateCrewAccountDetails = await Crew.findOneAndUpdate({userId: crewUserId}, {$set:{
                 ...crewInputInfo,
                 imageUrl: uploadImage.url
             }
@@ -58,7 +58,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to create Crew account");
-        }).exec()
+        })
         
         if(!updateCrewAccountDetails){
             return res.send({
@@ -199,22 +199,24 @@ const TIMEOUT = async (req, res) =>{
         const overTime = ((endShiftParse.getTime() - timeOutParse.getTime()) / 3600000).toFixed(2);
 
 
-        const totalHoursOfLate = isNaN(hoursLate) || hoursLate < 0 ? 0 : hoursLate;
-        const totalOverTime = isNaN(overTime) || overTime < 0 ? 0 : overTime;
-        hoursOfWork = parseInt(hoursOfWork).toFixed(1);
+        const totalHoursOfLate = isNaN(hoursLate) || hoursLate < .5 ? 0 : hoursLate;
+        const totalOverTime = isNaN(overTime) || overTime < .5 ? 0 : overTime;
 
         
-        //Weekly salary= (number of days present in a week ) * (Daily rate)
+        //Weekly salary = (number of days present in a week ) * (Daily rate)
 
         // Total salary = weekly salary + overtime - late
 
         // Overtime = ((daily rate / number of regular hours daily ) * (number of overtime hours))
         
         // Late = ((daily rate / number of regular hours daily ) * (number of late hours))
-
-        const lateComputation = totalHoursOfLate >= .5 ? ((checkIfTimeInExist.crewId.hourlyRate / 8 ) * (totalHoursOfLate)) : 0
-        const overTimeComputation = totalOverTime >= .5 ?((checkIfTimeInExist.crewId.hourlyRate / 8 ) * (totalOverTime)) : 0
-        // const weeklySalaryComputation = 
+        let remarks = 'Absent'
+        if(hoursOfWork > 4){
+            remarks = 'Present'
+        }else if (hoursOfWork <= 4){
+            remarks = 'halfDay'
+        }
+        // const dailySalaryComputation = 
         //update the dtr of crew
         const updateDtr = await Dtr.updateOne({crewId: crewId},{$set: {timeOut: timeOut,}})
         .catch((error) =>{
@@ -239,18 +241,16 @@ const TIMEOUT = async (req, res) =>{
                 Name:"vash",
                 crewId:crewId,
                 projectId: checkIfTimeInExist.crewId.projectId,
-                [checkIfTimeInExist.dayToday]: hoursOfWork,
+                [checkIfTimeInExist.dayToday]: remarks,
                 totalHoursWork:hoursOfWork,
                 totalOverTimeHours: totalOverTime,
                 totalLateHours: totalHoursOfLate,
-                weeklySalary: 0
-                
             });
             await newCsvRecord.save();
         } else {
             //update the database if the user is already on the csv record
             const updateCsvRecord = await Csv.updateOne({crewId: crewId}, {$set:{
-                [checkIfTimeInExist.dayToday]: parseInt(hoursOfWork),
+                [checkIfTimeInExist.dayToday]: hoursOfWork > 4 ?  1 : 0.5,
                 totalHoursWork: csvRecord.totalHoursWork ? csvRecord.totalHoursWork + hoursOfWork : hoursOfWork,
                 totalOverTimeHours:csvRecord.totalOverTimeHours ? csvRecord.totalOverTimeHours + totalOverTime : totalOverTime,
                 totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + totalHoursOfLate : totalHoursOfLate

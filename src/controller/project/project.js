@@ -24,6 +24,7 @@ const saltRounds = 10
 
 const ADD_TASK = async (req, res) => {
     try {
+        
         const {taskName,startDate, endDate, _id} = req.body;
         
         const addTask = await Task.create({
@@ -587,29 +588,22 @@ const EDIT_DAILY_REPORT = async (req, res) => {
 
 const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
     try {
+        const {projectId} = req.params
         //to ensure that the csv will be save on user download floder
         const DOWNLOAD_DIR = path.join(os.homedir(), 'Downloads');
-
-        const {projectId} = req.params
-
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
         const timeIn = format(now, 'HH:mm:ss');
         // Get all the CSV data from the database
-        const csvData = await Csv.find({projectId})
+        const csvData = await Csv.find({projectId: projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to create Crew account");
         })
 
-        if(!csvData){
-            return res.send({
-                status: "FAILED",
-                statusCode: 400,
-                response: {
-                    message: "No csv data found"
-                }
-            });
+
+        if(!csvData || csvData.length === 0) {
+            throw Error ("No csv record yet")
         }
 
         // Define the headers for the CSV file
@@ -648,14 +642,14 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
         
 
     } catch (error) {
-        console.error(error)(error);
-        return res.send({
-            status: 'INTERNAL SERVER ERROR',
-            statusCode: 500,
-            response: {
-            message: error.message
+        console.error(error);
+        res.send({
+            status: "INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                messsage: "An error occurred while downloading csv"
             }
-        });
+        })
     }
 }
 

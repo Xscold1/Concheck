@@ -6,28 +6,28 @@ const csvSchema = new Schema({
         type:String,
     },
     monday:{
-        type: Number,
-        default:0
+        type: String,
+        default:""
    },
 
     teusday:{
-        type:Number,
-        default:0
+        type:String,
+        default:""
     },
 
     wednesDay:{
-        type:Number,
-        default:0
+        type:String,
+        default:""
     },
 
     thursDay:{
-        type:Number,
-        default:0
+        type:String,
+        default:""
     },
 
     friday:{
-        type:Number,
-        default:0
+        type:String,
+        default:""
     },
 
     totalHoursWork:{
