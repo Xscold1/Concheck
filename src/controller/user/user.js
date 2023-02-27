@@ -60,16 +60,11 @@ const LOGIN = async (req, res) => {
 
         }else if(checkEmail.roleId === "2"){
 
-            const fetchCompanyInfo = await Company.findOne({userId:checkEmail._id }).populate('userId').catch((error) =>{
+            const fetchCompanyInfo = await Company.findOne({userId:checkEmail._id }).populate('userId')
+            .catch((error) =>{
                 console.error(error);
-                return res.send({
-                    status: "FAILED",
-                    statusCode: 500,
-                    response: {
-                        message: error.message
-                    }
-                });
-            }).exec()
+                throw new Error("Error in Fiding Dtr Record");
+            })
             const token = tokenization.generateToken({_id:checkEmail._id, roleId:checkEmail.roleId, firstName: fetchCompanyInfo.firstName})
             
             return res.send({
@@ -82,16 +77,11 @@ const LOGIN = async (req, res) => {
             })
 
         }else if(checkEmail.roleId === "3"){
-            const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail._id  }).populate('userId').catch((error) =>{
+            const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail._id  }).populate('userId')
+            .catch((error) =>{
                 console.error(error);
-                return res.send({
-                    status: "FAILED",
-                    statusCode: 500,
-                    response: {
-                        message: error.message
-                    }
-                });
-            }).exec()
+                throw new Error("Error in Fiding Dtr Record");
+            })
             const token = tokenization.generateToken({_id:email._id, roleId:checkEmail.roleId, firstName: fetchEngineerInfo.firstName, EngineerId: fetchEngineerInfo._id})
             return res.send({
                 status:"SUCCESS",
@@ -103,16 +93,11 @@ const LOGIN = async (req, res) => {
             })
 
         }else if (checkEmail.roleId === "4"){
-            const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  }).populate('userId').catch((error) =>{
+            const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  }).populate('userId')
+            .catch((error) =>{
                 console.error(error);
-                return res.send({
-                    status: "FAILED",
-                    statusCode: 500,
-                    response: {
-                        message: error.message
-                    }
-                });
-            }).exec()
+                throw new Error("Error in Fiding Dtr Record");
+            })
             const token = tokenization.generateToken({_id:fetchCrewInfo._id, roleId:checkEmail.roleId, firstName: fetchCrewInfo.firstName})
 
             return res.send({

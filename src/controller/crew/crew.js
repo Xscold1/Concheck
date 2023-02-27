@@ -3,8 +3,6 @@ const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
 const {format, parse} = require('date-fns');
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-
 
 //models
 const Crew = require('../../models/crew')
@@ -18,27 +16,25 @@ const cloudinary = require('../../utils/cloudinary');
 //global variables
 const saltRounds = 10
 
-
 const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
     const session = await conn.startSession();
     try {
         session.startTransaction();
-
+        const {crewId} = req.params
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const crewInputInfo = {
             firstName: req.body.firstName,
             lastName: req.body.lastName,
             address: req.body.address,
             contactNumber: req.body.contactNumber,
-        }
+        } 
 
         const userAccountDetails = {
             password: req.body.password,
-            _id: req.body._id
         }
         const hashPassword = bcrypt.hashSync(userAccountDetails.password, saltRounds)
 
-        const updatePassword = await User.findOneAndUpdate(userAccountDetails._id,{password:hashPassword})
+        const updatePassword = await User.findOneAndUpdate(crewId,{password:hashPassword})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed To Update Account Details");
@@ -179,67 +175,55 @@ const TIMEOUT = async (req, res) =>{
         const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId}).populate('crewId')
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("Error in Fiding Dtr Record");
         })
 
         if(!checkIfTimeInExist){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"There is no timein record yet"
-                }
-            })
-        }
-        //check if the crew has already time out for the day
-        if(checkIfTimeInExist.timeOut === {}){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"You have already timed out for the day"
-                }
-            })
+            throw ("No Time in Record Exist ")
         }
 
+        //check if the crew has already time out for the day
+        if(checkIfTimeInExist.timeOut === {}){
+            throw ("Already Time out for today")
+        }
+
+        //parse date and time for computation
         const timeInParse = parse(checkIfTimeInExist.timeIn, timeFormat, new Date());
         const timeOutParse = parse(timeOut, timeFormat, new Date());
         const startShiftParse = parse(checkIfTimeInExist.crewId.startShift, timeFormat, new Date());
         const endShiftParse = parse(checkIfTimeInExist.crewId.endShift, timeFormat, new Date());
 
-        const hoursOfWork = ((timeOutParse.getTime() - timeInParse.getTime()) / 3600000).toFixed(1);
-
-        const hoursLate = ((timeInParse.getTime() - startShiftParse.getTime()) / 3600000).toFixed(1);
-
-        const overTime = ((endShiftParse.getTime() - timeOutParse.getTime()) / 3600000).toFixed(1);
+        //actual computation
+        let hoursOfWork = ((timeOutParse.getTime() - timeInParse.getTime()) / 3600000).toFixed(2);
+        const hoursLate = ((timeInParse.getTime() - startShiftParse.getTime()) / 3600000).toFixed(2);
+        const overTime = ((endShiftParse.getTime() - timeOutParse.getTime()) / 3600000).toFixed(2);
 
 
         const totalHoursOfLate = isNaN(hoursLate) || hoursLate < 0 ? 0 : hoursLate;
         const totalOverTime = isNaN(overTime) || overTime < 0 ? 0 : overTime;
-        const hourseOfWork = parseInt(hoursOfWork).toFixed(1);
+        hoursOfWork = parseInt(hoursOfWork).toFixed(1);
 
+        
+        //Weekly salary= (number of days present in a week ) * (Daily rate)
+
+        // Total salary = weekly salary + overtime - late
+
+        // Overtime = ((daily rate / number of regular hours daily ) * (number of overtime hours))
+        
+        // Late = ((daily rate / number of regular hours daily ) * (number of late hours))
+
+        const lateComputation = totalHoursOfLate >= .5 ? ((checkIfTimeInExist.crewId.hourlyRate / 8 ) * (totalHoursOfLate)) : 0
+        const overTimeComputation = totalOverTime >= .5 ?((checkIfTimeInExist.crewId.hourlyRate / 8 ) * (totalOverTime)) : 0
+        // const weeklySalaryComputation = 
         //update the dtr of crew
-
-        const updateDtr = await Dtr.updateOne({crewId: crewId},
-            {$set: {
-                timeOut: timeOut,
-                hoursOfWorkToday: hourseOfWork, 
-                hoursOfLateToday: totalHoursOfLate, 
-                hoursOfOverTimeToday: totalOverTime
-            }})
-            .catch((error) =>{
-                console.error(error);
-                throw new Error("Failed to create Crew account");
-            })
+        const updateDtr = await Dtr.updateOne({crewId: crewId},{$set: {timeOut: timeOut,}})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("Failed While updating Dtr");
+        })
 
         if(!updateDtr){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to update DTR"
-                }
-            })
+            throw("Failed to update Dtr record")
         }
 
         //check if there is already a csv already has the crewId
@@ -248,27 +232,26 @@ const TIMEOUT = async (req, res) =>{
             console.error(error);
             throw new Error("Failed to create Crew account");
         })
+
         if (!csvRecord) {
             // If the CSV record doesn't exist, create a new one
             const newCsvRecord = new Csv({
                 Name:"vash",
                 crewId:crewId,
                 projectId: checkIfTimeInExist.crewId.projectId,
-                [checkIfTimeInExist.dayToday]: hourseOfWork,
-                totalHoursWork:hourseOfWork,
+                [checkIfTimeInExist.dayToday]: hoursOfWork,
+                totalHoursWork:hoursOfWork,
                 totalOverTimeHours: totalOverTime,
                 totalLateHours: totalHoursOfLate,
-                hourlyRate: checkIfTimeInExist.crewId.hourlyRate,
                 weeklySalary: 0
                 
             });
-        
             await newCsvRecord.save();
         } else {
             //update the database if the user is already on the csv record
             const updateCsvRecord = await Csv.updateOne({crewId: crewId}, {$set:{
                 [checkIfTimeInExist.dayToday]: parseInt(hoursOfWork),
-                totalHoursWork: csvRecord.totalHoursWork ? csvRecord.totalHoursWork + hourseOfWork : hourseOfWork,
+                totalHoursWork: csvRecord.totalHoursWork ? csvRecord.totalHoursWork + hoursOfWork : hoursOfWork,
                 totalOverTimeHours:csvRecord.totalOverTimeHours ? csvRecord.totalOverTimeHours + totalOverTime : totalOverTime,
                 totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + totalHoursOfLate : totalHoursOfLate
             }})

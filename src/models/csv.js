@@ -45,10 +45,6 @@ const csvSchema = new Schema({
         default:0
     },
 
-    rate:{
-        type:Number,
-    },
-
     weeklySalary:{
         type:Number,
         default:0
