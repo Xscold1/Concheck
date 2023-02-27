@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const csvSchema = new Schema({
+    
     Name: {
         type:String,
     },
+
     monday:{
         type: String,
         default:""

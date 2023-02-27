@@ -105,7 +105,7 @@ const TIMEIN = async (req, res) =>{
         
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
-        const timeIn = format(now, 'HH:mm:ss');
+        const timeIn = format(now, 'HH:mm');
         
         
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
@@ -127,10 +127,7 @@ const TIMEIN = async (req, res) =>{
         const newCrewTimeIn = new Dtr({timeIn: timeIn, date: date, crewId: crewId, dayToday: daysInWeek[now.getDay()]})
         
 
-        await newCrewTimeIn.catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to create Crew account");
-        }).save()
+        await newCrewTimeIn.save()
 
         if(!newCrewTimeIn){
             return res.send({
@@ -168,8 +165,8 @@ const TIMEOUT = async (req, res) =>{
         //date formats
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
-        const timeOut = format(now, 'HH:mm:ss');
-        const timeFormat = 'HH:mm:ss';
+        const timeOut = format(now, 'HH:mm');
+        const timeFormat = 'HH:mm';
 
         //update Dtr to accept Timeout and be use
         const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId}).populate('crewId')
@@ -198,25 +195,18 @@ const TIMEOUT = async (req, res) =>{
         const hoursLate = ((timeInParse.getTime() - startShiftParse.getTime()) / 3600000).toFixed(2);
         const overTime = ((endShiftParse.getTime() - timeOutParse.getTime()) / 3600000).toFixed(2);
 
-
+        //if totalHours and total Late is less than 30 mins then it will not be counted as late
         const totalHoursOfLate = isNaN(hoursLate) || hoursLate < .5 ? 0 : hoursLate;
         const totalOverTime = isNaN(overTime) || overTime < .5 ? 0 : overTime;
 
+        let weeklySalary = (checkIfTimeInExist.crewId.hourlyRate * 8) + (checkIfTimeInExist.crewId.hourlyRate * (totalOverTime - totalHoursOfLate))
         
-        //Weekly salary = (number of days present in a week ) * (Daily rate)
-
-        // Total salary = weekly salary + overtime - late
-
-        // Overtime = ((daily rate / number of regular hours daily ) * (number of overtime hours))
-        
-        // Late = ((daily rate / number of regular hours daily ) * (number of late hours))
         let remarks = 'Absent'
         if(hoursOfWork > 4){
             remarks = 'Present'
         }else if (hoursOfWork <= 4){
             remarks = 'halfDay'
         }
-        // const dailySalaryComputation = 
         //update the dtr of crew
         const updateDtr = await Dtr.updateOne({crewId: crewId},{$set: {timeOut: timeOut,}})
         .catch((error) =>{
@@ -242,18 +232,18 @@ const TIMEOUT = async (req, res) =>{
                 crewId:crewId,
                 projectId: checkIfTimeInExist.crewId.projectId,
                 [checkIfTimeInExist.dayToday]: remarks,
-                totalHoursWork:hoursOfWork,
-                totalOverTimeHours: totalOverTime,
-                totalLateHours: totalHoursOfLate,
+                totalHoursWork:parseInt(hoursOfWork),
+                weeklySalary: weeklySalary
             });
             await newCsvRecord.save();
         } else {
             //update the database if the user is already on the csv record
             const updateCsvRecord = await Csv.updateOne({crewId: crewId}, {$set:{
                 [checkIfTimeInExist.dayToday]: hoursOfWork > 4 ?  1 : 0.5,
-                totalHoursWork: csvRecord.totalHoursWork ? csvRecord.totalHoursWork + hoursOfWork : hoursOfWork,
-                totalOverTimeHours:csvRecord.totalOverTimeHours ? csvRecord.totalOverTimeHours + totalOverTime : totalOverTime,
-                totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + totalHoursOfLate : totalHoursOfLate
+                totalHoursWork: csvRecord.totalHoursWork ? csvRecord.totalHoursWork + parseInt(hoursOfWork) : parseInt(hoursOfWork),
+                totalOverTimeHours:csvRecord.totalOverTimeHours ? csvRecord.totalOverTimeHours + parseInt(totalOverTime) : parseInt(totalOverTime),
+                totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + paraseInt(totalHoursOfLate) : paraseInt(totalHoursOfLate),
+                weeklySalary: csvRecord.weeklySalary ? csvRecord.weeklySalary + weeklySalary : weeklySalary
             }})
             .catch((error) =>{
                 console.error(error);
@@ -279,7 +269,8 @@ const TIMEOUT = async (req, res) =>{
             }
         })
 
-    } catch (err) {
+    } catch (error) {
+        console.log(error)
         return res.send({
             status: "INTERNAL_SERVER_ERROR",
             statusCode:500,
