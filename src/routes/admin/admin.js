@@ -3,8 +3,9 @@ const router = express.Router();
 const adminController = require('../../controller/admin/admin')
 const upload = require('../../middleware/upload');
 const auth = require('../../middleware/auth');
+const validation = require('../../middleware/validation');
 
-router.post('/add-admin-account', auth, adminController.ADD_ADMIN_ACCOUNT)
+router.post('/add-admin-account', validation,auth, adminController.ADD_ADMIN_ACCOUNT)
 router.post('/add-company-account', auth,upload.single('imageUrl') , adminController.ADD_COMPANY_ACCOUNT)
 router.get('/get-all-admin-account',auth, adminController.GET_ALL_ADMIN_ACCOUNT)
 router.get('/get-all-company-account', auth,adminController.GET_ALL_COMPANY_ACCOUNT)
