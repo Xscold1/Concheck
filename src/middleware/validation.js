@@ -1,22 +1,14 @@
 module.exports = function(req, res, next){
-    
+
     try {
         const requestBody = req.body
         for(let fields in requestBody){
-            if(typeof fields  != typeof requestBody[fields]){
-                return res.send({
-                    status:"FAILED",
-                    statusCode:500,
-                    response:{
-                        message:`${fields} should be ${typeof fields}`
-                    }
-                })
-                    
-            }
+            if(typeof fields  != typeof requestBody[fields])
+            throw { statusCode: 500, message: `${fields} should be ${typeof fields}` };
         }
         next()
     } catch (error) {
-        console.log('error', error)
+        console.log(error)
         res.status(200).send({
           status: 'FAILED',
           status_code: error.statusCode || 500,
