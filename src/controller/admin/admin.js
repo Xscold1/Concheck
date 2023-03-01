@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const cloudinary = require('../../utils/cloudinary')
-
+const Validation = require('../../utils/validation');
 //models 
 const User = require('../../models/user')
 const Company = require('../../models/company')
@@ -14,6 +14,8 @@ const saltRounds = 10
 const ADD_ADMIN_ACCOUNT = async (req, res) => {
     try {
 
+        const input = req.body;
+        const checkValidity = Validation(input, User)
         const {email, password} = req.body;
         const checkAdminIfExist = await User.findOne({email: email})
         .catch((error) =>{
