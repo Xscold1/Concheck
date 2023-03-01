@@ -125,7 +125,7 @@ const EDIT_PROJECT = async (req, res) => {
             budget:req.body.budget,
         }
 
-        if(req.file === undefined){
+        if(!req.file){
             const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
                 $set:{
                     ...createProjectInfo,
@@ -147,14 +147,16 @@ const EDIT_PROJECT = async (req, res) => {
         const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
             $set:{
                 ...uploadImage,
-                imageUrl:uploadImage.Url
-            }}).catch((error) =>{
-                console.error(error);
-                throw new Error("Failed to Update Project");
-            })
+                imageUrl:uploadImage.url
+            }})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("Failed to Update Project");
+        })
         if(!findAndUpdateProject){
             throw new Error("Failed to Update Project")
         } 
+
         res.send({
             status:"SUCCESS",
             statusCode:200,
@@ -162,6 +164,7 @@ const EDIT_PROJECT = async (req, res) => {
                 message:"Update Successfully"
             }
         })
+
     } catch (error) {
         console.error(error);
         return res.send({
