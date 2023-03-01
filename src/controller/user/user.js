@@ -31,9 +31,9 @@ const LOGIN = async (req, res) => {
                 }
             })
         }
-        const checkPassowrd = bcrypt.compareSync(password, checkEmail.password)
+        const checkPassword = bcrypt.compareSync(password, checkEmail.password)
 
-        if(!checkPassowrd){
+        if(!checkPassword){
             return res.send({
                 status:"ERROR",
                 statusCode:400,
@@ -42,9 +42,7 @@ const LOGIN = async (req, res) => {
                 }
             })
         }
-        
-
-        if(checkEmail.roleId === "1"){
+        if(checkEmail.roleId === "1" || checkEmail.roleId === 1){
 
             const adminToken = tokenization.generateToken({_id:checkEmail._id, roleId:checkEmail.roleId})
 
@@ -58,7 +56,7 @@ const LOGIN = async (req, res) => {
                 }
             })
 
-        }else if(checkEmail.roleId === "2"){
+        }else if(checkEmail.roleId === "2" ||  checkEmail.roleId === 2){
 
             const fetchCompanyInfo = await Company.findOne({userId:checkEmail._id }).populate('userId')
             .catch((error) =>{
@@ -76,7 +74,7 @@ const LOGIN = async (req, res) => {
                 }
             })
 
-        }else if(checkEmail.roleId === "3"){
+        }else if(checkEmail.roleId === "3" || checkEmail.roleId === 3){
             const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail._id  }).populate('userId')
             .catch((error) =>{
                 console.error(error);
@@ -92,7 +90,7 @@ const LOGIN = async (req, res) => {
                 }
             })
 
-        }else if (checkEmail.roleId === "4"){
+        }else if (checkEmail.roleId === "4" || checkEmail.roleId === 4){
             const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  }).populate('userId')
             .catch((error) =>{
                 console.error(error);
@@ -112,6 +110,7 @@ const LOGIN = async (req, res) => {
         }
         
     } catch (error) {
+        console.error(error)
         res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,

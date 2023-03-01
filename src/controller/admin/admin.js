@@ -421,6 +421,13 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
     session.endSession();
 }
 
+const DELETE_ADMIN = async (req, res) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+}
 module.exports= {
     ADD_ADMIN_ACCOUNT,
     GET_ALL_ADMIN_ACCOUNT,
