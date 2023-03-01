@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const companySchema = new Schema({
     imageUrl: {
@@ -23,5 +24,7 @@ const companySchema = new Schema({
     }
 
 })
+companySchema.plugin(AutoIncrement, {inc_field: 'companyId'});
+
 
 module.exports = Company = mongoose.model('company', companySchema);

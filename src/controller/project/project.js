@@ -97,7 +97,7 @@ const ADD_DAILY_REPORT = async (req,res)=>{
 const ADD_CREW_ACCOUNT = async (req, res) => {
     const session = await conn.startSession()
     try {
-
+        const {projectId} = req.params
         session.startTransaction()
         const timeFormat = 'HH:mm';
         const dateFormat = 'dd-MM-yyyy'
@@ -125,6 +125,22 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             })
         }
         
+        const checkIfProjectExist = await Project.findOne({projectId:projectId})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("Failed to create Crew account");
+        })
+
+        if(!checkIfProjectExist || checkIfProjectExist === undefined || checkIfProjectExist === null){
+            return res.send({
+                status: "FAILED",
+                statusCode:400,
+                response:{
+                    messsage: "Project Not Found"
+                }
+            })
+        }
+
         const hashPassword = bcrypt.hashSync(password, saltRounds)
 
         const createCrewUserAccount = await User.create([{
@@ -137,7 +153,7 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             throw new Error("Failed to create crew account");
         })
 
-        let id = createCrewUserAccount.map(a => a._id)
+        let userId = createCrewUserAccount.map(a => a.userId)
 
         const createCrewAccount = await Crew.create([{
             firstName: firstName,
@@ -145,8 +161,9 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             dailyRate:dailyRate,
             startShift:startShift,
             endShift:endShift,
-            userId:id[0],
-            projectId:_id,
+            userId:userId[0],
+            companyId:checkIfProjectExist.companyId,
+            projectId:projectId,
             hourlyRate: hourlyRate.toFixed(2),
         }], {session})
         .catch((error) =>{

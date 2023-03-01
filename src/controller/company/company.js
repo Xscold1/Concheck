@@ -21,7 +21,8 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
     const session = await conn.startSession();
     try {
         session.startTransaction();
-        const {companyUserId} = req.params
+        const {companyId} = req.params
+
         const userAccountInput = {
             email: req.body.email,
             password: req.body.password
@@ -34,7 +35,11 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             address: req.body.address
         }
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        const checkIfCompanyExist = await Company.findOne({companyId : companyId})
 
+        if(!checkIfCompanyExist || checkIfCompanyExist === undefined || checkIfCompanyExist === []) {
+            throw new Error("Company does not exist");
+        }
         const checkEmailIfExists = await User.findOne({email: userAccountInput.email})
         .catch((error) =>{
             throw new Error("Failed to find user account");
@@ -59,18 +64,20 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             
         }], { session })
         .catch((error) =>{
+            console.error(error)
             throw new Error("Failed to create engineer account");
         })
 
-        let result = registerUser.map(a => a._id)
+        let result = registerUser.map(a => a.userId)
 
         await Engineer.create([{
             ...engineerAccountInput,
             imageUrl: uploadImage.url, 
             userId: result[0],
-            companyId: companyUserId
+            companyId: companyId
         }], { session })
         .catch((error) =>{
+            console.error(error)
             throw new Error("Failed to create engineer account");
         })
 
@@ -98,8 +105,8 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
 
 const GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY = async (req, res)=>{
     try {
-        const {companyUserId} = req.params
-        const fetchAllEngineerData = await Engineer.find({companyId:companyUserId}).populate('userId')
+        const {companyId} = req.params
+        const fetchAllEngineerData = await Engineer.find({companyId:companyId})
         .catch((error) =>{
             throw new Error("Failed to find engineer account");
         })
@@ -136,8 +143,8 @@ const GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY = async (req, res)=>{
 
 const GET_ENGINEER_ACCOUNT_BY_ID = async (req,res) => {
     try {
-        const {engineerUserId} = req.params
-        const findEngineerAccount = await Engineer.findOne({userId:engineerUserId}).populate('userId')
+        const {engineerId} = req.params
+        const findEngineerAccount = await Engineer.findOne({engineerId:engineerId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find engineer account");

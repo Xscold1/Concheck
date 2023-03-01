@@ -15,6 +15,7 @@ const cloudinary = require('../../utils/cloudinary')
 
 const CREATE_PROJECT = async (req, res) => {
     try {
+        const {engineerId} = req.params
         const createProjectInfo = {
             projectName:req.body.projectName,
             startDate:req.body.startDate,
@@ -25,14 +26,13 @@ const CREATE_PROJECT = async (req, res) => {
             projectCode:req.body.projectCode,
             status:req.body.status, 
             budget:req.body.budget,
-            projectEngineerId: req.body._id
         }
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const checkProjecifExist = await Project.findOne({projectName: createProjectInfo.projectName})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to find project");
+            throw new Error("An error occurred while fetching project information");
         })
 
         if(checkProjecifExist){
@@ -44,9 +44,27 @@ const CREATE_PROJECT = async (req, res) => {
                 }
             })
         }
+        
+        const findEngineerIfExist = await Engineer.findOne({engineerId: engineerId})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("An error occurred while fetching engineer information");
+        })
+
+        if(!findEngineerIfExist || findEngineerIfExist === undefined || findEngineerIfExist === []){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "Engineer does not exist"
+                }
+            })
+        }
 
         const createProject = await Project.create({
             ...createProjectInfo,
+            companyId: findEngineerIfExist.companyId,
+            engineerId: findEngineerIfExist.engineerId,
             imageUrl: uploadImage.url
         })
         .catch((error) =>{

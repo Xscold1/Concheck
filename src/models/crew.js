@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const crewSchema = new Schema({
 
@@ -44,14 +45,21 @@ const crewSchema = new Schema({
     },
 
     projectId: {
-        type:mongoose.Schema.Types.ObjectId,
+        type:Number,
         ref: 'projects'
     },
 
+    companyId:{
+        type:Number,
+        required: true
+    },
+    
     userId:{
         type: Number,
         ref: 'User',
     }
 })
+
+crewSchema.plugin(AutoIncrement, {inc_field: 'crewId'});
 
 module.exports = Crew = mongoose.model('crew', crewSchema);

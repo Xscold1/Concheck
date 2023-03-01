@@ -3,9 +3,6 @@ const Schema = mongoose.Schema;
 const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const userSchema = new Schema({
-    _id:{
-        type:Number,
-    },
     email:{
         type: String,
         required: true,
@@ -17,9 +14,12 @@ const userSchema = new Schema({
     roleId:{
         type: String,
         required: true,
+    },
+    userId:{
+        type: Number
     }
-}, { _id: false })
+})
 
-userSchema.plugin(AutoIncrement, {  id : 'userSchema_id_counter' ,inc_field: '_id'})
+userSchema.plugin(AutoIncrement, {inc_field: 'userId'});
 
 module.exports = User = mongoose.model('User', userSchema);

@@ -31,15 +31,14 @@ const  engineerSchema = new Schema({
 
     companyId:{
         type: Number,
-        required:true,
         ref:"company"
     },
-
     userId:{
         type: Number,
         ref: 'User',
     }
 })
 
+engineerSchema.plugin(AutoIncrement, {inc_field: 'engineerId'});
 
 module.exports = Engineer = mongoose.model('Engineer', engineerSchema);

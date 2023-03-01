@@ -46,10 +46,16 @@ const projectSchema = new Schema({
         type:Number,
         required:true,
     },
-    projectEngineerId:{
-        type: mongoose.Schema.Types.ObjectId
+    engineerId:{
+        type:Number,
+        required:true,
+    },
+    companyId:{
+        type:Number,
+        required:true,
     }
 })
 
+projectSchema.plugin(AutoIncrement, {inc_field: 'projectId'});
 
 module.exports = project = mongoose.model('project', projectSchema);

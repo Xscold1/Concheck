@@ -4,7 +4,7 @@ const projectController = require('../../controller/project/project')
 const upload = require('../../middleware/upload');
 const auth = require('../../middleware/auth');
 
-router.post('/add-crew-account/:_id', auth,projectController.ADD_CREW_ACCOUNT)
+router.post('/add-crew-account/:projectId', auth,projectController.ADD_CREW_ACCOUNT)
 router.post('/add-task',auth, projectController.ADD_TASK)
 router.post('/add-daily-report/:projectId', auth,projectController.ADD_DAILY_REPORT)
 router.post('/upload-image/:_id', auth , upload.array('imageUrl'),projectController.UPLOAD_IMAGE)

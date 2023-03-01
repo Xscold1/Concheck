@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const imageSchema = new Schema({
     imageUrl:{
@@ -13,9 +14,11 @@ const imageSchema = new Schema({
         required: true
     },
     projectId: {
-        type:mongoose.Schema.Types.ObjectId,
+        type:Number,
         ref: 'projects'
     }
 })
+
+imageSchema.plugin(AutoIncrement, {inc_field: 'imageId'});
 
 module.exports = Image = mongoose.model('image', imageSchema);

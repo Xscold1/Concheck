@@ -1,23 +1,34 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const taskSchema = new Schema({
-        taskName: {
-            type: String,
-            required: true
-        },
-        startDate:{
-            type: Date,
-            required: true
-        },
-        endDate:{
-            type: Date,
-            required: true
-        },
-        projectId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'project',
-        }
+    taskName: {
+        type: String,
+        required: true
+    },
+    startDate:{
+        type: Date,
+        required: true
+    },
+    endDate:{
+        type: Date,
+        required: true
+    },
+    projectId: {
+        type:Number,
+        ref: 'project',
+    },
+    companyId:{
+        type:Number,
+        ref: 'company',
+    },
+    engineerId:{
+        type:Number,
+        ref: 'engineer',
+    }
 })
+
+taskSchema.plugin(AutoIncrement, {inc_field: 'taskId'});
 
 module.exports = Task = mongoose.model('task', taskSchema);

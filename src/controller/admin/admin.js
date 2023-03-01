@@ -6,6 +6,14 @@ const Validation = require('../../utils/validation');
 //models 
 const User = require('../../models/user')
 const Company = require('../../models/company')
+const Engineer = require('../../models/engineer')
+const Crew = require('../../models/crew')
+const Project = require('../../models/project')
+const Task = require('../../models/task')
+const Image = require('../../models/image')
+const Dtr = require('../../models/dtr')
+const Csv = require('../../models/csv')
+const dailyReport = require('../../models/dailyReport')
 
 //library
 const bcrypt = require('bcrypt');
@@ -107,11 +115,11 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
             throw new Error("Failed to Create Company User Account");
         }
 
-        let id = createCompanyUserAccount.map(a => a._id)
+        let userId = createCompanyUserAccount.map(a => a.userId)
 
         const createCompany = await Company.create([{
            ...registerCompany,
-           userId: id[0],
+           userId: userId[0],
            imageUrl: uploadImage.url
         }], {session})
         .catch((error) =>{
@@ -433,9 +441,47 @@ const DELETE_ADMIN_ACCOUNT = async (req, res) => {
 
 const DELETE_COMPANY_ACCOUNT = async (req, res) => {
     try {
+        const {companyId} = req.params
         
+        //find and map engineer id to delete all the user account associated with engineer schema
+        const findEngineerViaCompanyId = await Engineer.find({companyId:companyId})
+        const engineerUserId = findEngineerViaCompanyId.map(userId => userId.userId)
+        
+        //find and map crew id to delete all the user account associated with crew schema
+        const findCrewByCompanyId = await Crew.find({companyId:companyId})
+        const crewUserIds = findCrewByCompanyId.map(userId => userId.userId)
+
+        const findCompany = await Company.findOne({companyId:companyId})
+        await User.deleteOne({userId:findCompany.userId})
+        //delete everything account associated with company
+        await Promise.all([
+            Crew.deleteMany({companyId:companyId}),
+            User.deleteMany({$or: [{ userId: { $in: crewUserIds } },{ userId: { $in: engineerUserId } }, { userId: findCompany.userId }]}),
+            Engineer.deleteMany({userId:engineerUserId}),
+            Project.deleteMany({companyId:companyId}),
+            Company.deleteOne({companyId:companyId}),
+            Image.deleteMany({companyId: companyId}),
+            Task.deleteMany({companyId: companyId}),
+            dailyReport.deleteMany({companyId: companyId}),
+        ])
+        
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully deleted company and all associates",
+            }
+        })
+
     } catch (error) {
-        
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"Failed to update company account"
+            }
+        })
     }
 }
 module.exports= {
