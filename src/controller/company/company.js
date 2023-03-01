@@ -23,6 +23,7 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
         session.startTransaction();
         const {companyUserId} = req.params
         const userAccountInput = {
+            email: req.body.email,
             password: req.body.password
         } 
 
@@ -219,6 +220,13 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Failed to find engineer account");
+            })
+           return res.send({
+                status:"SUCCESS",
+                statusCode:200,
+                response:{
+                    message:"Account Updated Successfully"
+                }
             })
         }
         

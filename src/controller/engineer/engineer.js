@@ -125,26 +125,36 @@ const EDIT_PROJECT = async (req, res) => {
             budget:req.body.budget,
         }
 
-        if(!req.file){
+        if(req.file === undefined){
             const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
                 $set:{
                     ...createProjectInfo,
-                }}).catch((error) =>{
+                }})
+            .catch((error) =>{
                     console.error(error);
                     throw new Error("Failed to Update Project");
-                })
+            })
+            return res.send({
+                status:"SUCCESS",
+                statusCode:200,
+                response:{
+                    message:"Account Updated Successfully"
+                }
+            })
         }
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
             $set:{
-                ...createProjectInfo,
+                ...uploadImage,
                 imageUrl:uploadImage.Url
             }}).catch((error) =>{
                 console.error(error);
                 throw new Error("Failed to Update Project");
             })
-        
+        if(!findAndUpdateProject){
+            throw new Error("Failed to Update Project")
+        } 
         res.send({
             status:"SUCCESS",
             statusCode:200,
