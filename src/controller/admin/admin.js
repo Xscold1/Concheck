@@ -14,8 +14,8 @@ const saltRounds = 10
 const ADD_ADMIN_ACCOUNT = async (req, res) => {
     try {
 
-        const input = req.body;
-        const checkValidity = Validation(input, User)
+        // const input = req.body;
+        // const checkValidity = Validation(input, User)
         const {email, password} = req.body;
         const checkAdminIfExist = await User.findOne({email: email})
         .catch((error) =>{
