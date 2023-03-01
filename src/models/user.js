@@ -15,7 +15,7 @@ const userSchema = new Schema({
         required: true,
     },
     roleId:{
-        type: String,
+        type: Number,
         required: true,
     }
 }, { _id: false })
