@@ -58,6 +58,13 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 console.error(error);
                 throw new Error("Failed To Update Account Details");
             })
+            return res.send({
+                status:"SUCCESS",
+                statusCode:200,
+                response:{
+                    message:"Account Updated Successfully"
+                }
+            })
         }
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const updateCrewAccountDetails = await Crew.findOneAndUpdate({userId: crewUserId}, {$set:{
@@ -182,7 +189,7 @@ const TIMEOUT = async (req, res) =>{
         }
 
         //check if the crew has already time out for the day
-        if(checkIfTimeInExist.timeOut){
+        if(checkIfTimeInExist.timeOut === {}){
             return res.send({
                 status:"FAILED",
                 statusCode:400,
@@ -314,9 +321,64 @@ const GET_CREW_BY_ID = async (req, res) => {
         })
     }
 }
+
+const GET_DTR_BY_CREW_ID = async (req, res) => {
+    try {
+        const daysInWeek = {
+            "0": 'sunday',
+            "1": 'monday',
+            "2": 'tuesday',
+            "3": 'wednesday',
+            "4": 'thursday',
+            "5": 'friday',
+            "6": 'saturday'
+        }
+        const now = new Date();
+        const {crewId} = req.params
+
+        const findDtr = await Dtr.findOne({crewId:crewId, dayToday: daysInWeek[now.getDay()]})
+        .catch((error) =>{
+            throw new Error("An error occurred while trying to fetch dtr data")
+        })
+            
+        if(!findDtr){
+            return res.send({
+                status: "FAILED",
+                statusCode:400,
+                response:{
+                    messsage: "No  dtr records found"
+                }
+            })
+        }
+
+        res.send({
+            status: "SUCCESS",
+            statusCode:200,
+            response:{
+                messsage: "Success",
+                data:{
+                    timein: findDtr.timeIn,
+                    timeout: findDtr.timeOut === {} || findDtr.timeOut ? findDtr.timeOut : "N/A"
+                }
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status: "INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                messsage: "Failed to get timein timeout details"
+            }
+        })
+    }
+    
+}
+
 module.exports = {
     UPDATE_CREW_ACCOUNT_DETAILS,
     TIMEIN,
     TIMEOUT,
-    GET_CREW_BY_ID
+    GET_CREW_BY_ID,
+    GET_DTR_BY_CREW_ID
 }

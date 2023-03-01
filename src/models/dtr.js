@@ -18,21 +18,6 @@ const dtrSchema = new Schema({
    dayToday: {
       type:String,
    },
-
-   // hoursOfWorkToday:{
-   //    type:Number,
-   //    default:0
-   // },
-   
-   // hoursOfLateToday:{
-   //    type:Number,
-   //    default:0
-   // },
-   
-   // hoursOfOverTimeToday:{
-   //    type:Number,
-   //    default:0
-   // },
    
    crewId:{
       type:mongoose.Schema.Types.ObjectId,
