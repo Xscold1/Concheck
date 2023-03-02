@@ -444,6 +444,83 @@ const GET_TASK_BY_ID = async (req, res) => {
     }
 }
 
+const GET_IMAGE_BY_PROJECT_ID = async (req, res)=>{
+    try {
+        const {projectId} = req.params
+
+        const findImageByProjectId = await Image.find({projectId:projectId})
+        .catch((error) => {
+            throw new Error("An error occurred while fetching image ")
+        })
+
+        if(!findImageByProjectId || findImageByProjectId === null || findImageByProjectId.length ===0 || findImageByProjectId === undefined){
+            return res.send({
+                status:"FAILED",
+                statusCode: 400,
+                response:{
+                    message: "There are no image"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode: 200,
+            response:{
+                message:"Successfully retrieved image",
+                data:findImageByProjectId,
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while fetching tasks",
+            }
+        })
+    }
+}
+
+const GET_IMAGE_BY_ID = async (req, res) => {
+    try {
+        const {imageId} = req.params
+
+        const findImage = await Image.findOne({imageId: imageId})
+        .catch((error)=>{
+            throw new Error("An error occurred while fetching Image infomation")
+        })
+        if(!findImage || findImage === undefined || findImage === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Image not found"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Image fetch successfully",
+                data:findImage
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while fetching tasks",
+            }
+        })
+    }
+}
+
 const GET_ALL_DAILY_REPORT_BY_PROJECT = async (req, res) => {
     try {
         const {projectId} = req.params
@@ -569,6 +646,45 @@ const EDIT_DAILY_REPORT = async (req, res) => {
     }
 }
 
+const EDIT_IMAGE = async(req,res) => {
+    try {
+        const {imageId} = req.params
+        const {caption} = req.body
+        const findImageAndUpdate = await Image.findOneAndUpdate({imageId: imageId} ,{$set:{caption:caption}})
+        .catch((error)=>{
+            throw new Error("An error occurred while updating image")
+        })
+
+        if(!findImageAndUpdate || findImageAndUpdate === undefined || findImageAndUpdate === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"An error occurred while updating image"
+                }
+            })
+        }
+
+        
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Image updated successfully",
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while fetching tasks",
+            }
+        })
+    }
+}
+
 const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
     try {
         const {projectId} = req.params
@@ -636,6 +752,166 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
     }
 }
 
+const DELETE_TASK = async (req,res) => {
+    try {
+        const {taskId} = req.params
+
+        const findTaskAndDelete = await Task.findOneAndDelete({taskId: taskId})
+        .catch((error) => {
+            throw new Error("An error occurred while deleting task");
+        })
+
+        if (!findTaskAndDelete || findTaskAndDelete === undefined || findTaskAndDelete === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "An error occurred while deleting task",
+                }
+            })
+        }
+
+        res.send({
+            statusbar: "SUCCESS",
+            statusCode:200,
+            response:{
+                message: "Task deleted successfully"
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while deleting tasks",
+            }
+        })
+    }
+}
+
+const DELETE_DAILY_REPORT = async (req,res) => {
+    try {
+        const {dailyReportId} = req.params
+
+        const findDailyReportAndDelete = await DailyReport.findOneAndDelete({dailyReportId: dailyReportId})
+        .catch((error) => {
+            throw new Error("An error occurred while deleting daily report");
+        })
+
+        if (!findDailyReportAndDelete || findDailyReportAndDelete === undefined || findDailyReportAndDelete === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "An error occurred while deleting daily report",
+                }
+            })
+        }
+
+        res.send({
+            statusbar: "SUCCESS",
+            statusCode:200,
+            response:{
+                message: "daily report deleted successfully"
+            }
+        })
+
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while deleting daily report",
+            }
+        })
+    }
+}
+
+const DELETE_IMAGE_BY_ID = async (req,res) => {
+    try {
+        const {imageId} = req.params
+
+        const findImageAndDelete = await Image.findOneAndDelete({imageId: imageId})
+        .catch((error) => {
+            throw new Error("An error occurred while deleting image");
+        })
+
+        if (!findImageAndDelete || findImageAndDelete === undefined || findImageAndDelete === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "An error occurred while deleting image",
+                }
+            })
+        }
+
+        res.send({
+            statusbar: "SUCCESS",
+            statusCode:200,
+            response:{
+                message: "image deleted successfully"
+            }
+        })
+
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while deleting image",
+            }
+        })
+    }
+}
+
+const DELETE_CREW = async (req,res) =>{
+    try {
+        const {crewId} = req.params
+
+        const findCrew = await Crew.findOne({crewId: crewId})
+        .catch((error)=>{
+            throw new Error("An error occurred while fetching crew information")
+        })
+
+        if(!findCrew || findCrew === undefined || findCrew === null){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "crew does not exist",
+                }
+            })
+        }
+
+        await Promise.all([
+            Crew.deleteOne({crewId: crewId}),
+            Dtr.deleteMany({crewId:crewId}),
+            User.deleteOne({userId: findCrew.userId})
+        ])
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Crew deleted successfully",
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while deleting image",
+            }
+        })
+    }
+}
+
 module.exports = {
     ADD_TASK,
     ADD_CREW_ACCOUNT,
@@ -645,10 +921,16 @@ module.exports = {
     GET_PROJECT_BY_ID,
     GET_ALL_CREW_BY_PROJECT,
     GET_DAILY_REPORT_BY_ID,
+    GET_IMAGE_BY_ID,
     GET_TASK_BY_ID,
     GET_ALL_DAILY_REPORT_BY_PROJECT,
+    GET_IMAGE_BY_PROJECT_ID,
     EDIT_TASK,
     EDIT_DAILY_REPORT,
-    DOWNLOAD_CSV_BY_PROJECT
-    
+    EDIT_IMAGE,
+    DOWNLOAD_CSV_BY_PROJECT,
+    DELETE_TASK,
+    DELETE_DAILY_REPORT,
+    DELETE_IMAGE_BY_ID,
+    DELETE_CREW
 }

@@ -20,10 +20,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10
 
 const ADD_ADMIN_ACCOUNT = async (req, res) => {
-    try {
-
-        // const input = req.body;
-        // const checkValidity = Validation(input, User)
+    try { 
         const {email, password} = req.body;
         const checkAdminIfExist = await User.findOne({email: email})
         .catch((error) =>{
@@ -276,7 +273,7 @@ const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
 
 const GET_ALL_COMPANY_ACCOUNT = async (req,res) => {
     try {
-        const fetchAllCompanyData = await Company.find({roleId:"2"}).populate('userId')
+        const fetchAllCompanyData = await Company.find({roleId:"2"})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find company account");
@@ -368,29 +365,8 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
         }
         
         const hashPassword = bcrypt.hashSync(updateUser.password, saltRounds)
-        const findCompany = await Company.findOne({companyId: companyId})
-
-        if(!findCompany || findCompany === undefined || findCompany === null){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message: "Company not found"
-                }
-            })
-        }
-
-        const updateCompanyUserAccount = await User.findByIdAndUpdate(findCompany.userId, [{$set: {
-            password:hashPassword, 
-
-        }}], {session})
-        .catch((error) =>{
-            throw new Error("Failed to update company account");
-        })
-        
-        //run this user if does not upload new picture
         if(!req.file){
-            await Company.findOneAndUpdate({
+            const updateCompanyAccount = await Company.findOneAndUpdate({
                 companyId: companyId
                 },[{$set: {
                     ...registerCompany,
@@ -398,6 +374,16 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
             .catch((error) =>{
                 throw new Error("Failed to update company account");
             })
+            
+            const updateCompanyUserAccount = await User.findOneAndUpdate({userId: updateCompanyAccount.userId}, [{$set: {
+                password: updateUser.password,
+            }}], {session})
+            .catch((error) =>{
+                console.error(error)
+                throw new Error("Failed to update company account");
+            })
+            
+
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -418,6 +404,18 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
             throw new Error("Failed to update company account");
         })
 
+        const updateCompanyUserAccount = await User.findOneAndUpdate({userId: updateCompanyAccount.userId}, [{$set: {
+            password: updateUser.password,
+        }}], {session})
+        .catch((error) =>{
+            console.error(error)
+            throw new Error("Failed to update company account");
+        })
+
+
+        //run this user if does not upload new picture
+        
+
         res.send({
             status:"SUCCESS",
             statusCode:200,
@@ -437,8 +435,10 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
             }
         })
         await session.abortTransaction();
+    }finally {
+        session.endSession();
     }
-    session.endSession();
+    
 }
 
 const DELETE_ADMIN_ACCOUNT = async (req, res) => {
