@@ -110,7 +110,7 @@ const GET_ALL_PROJECT = async (req, res) => {
                 }
             })
         }
-
+        
         res.send({
             status:"SUCCESS",
             statusCode:200,

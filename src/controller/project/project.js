@@ -291,7 +291,7 @@ const GET_PROJECT_BY_ID = async (req, res) => {
     try {
         const {projectId} = req.params
 
-        const fetchProjectDetails = await Project.findById(projectId)
+        const fetchProjectDetails = await Project.findOne({projectId: projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching project");
