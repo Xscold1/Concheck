@@ -196,8 +196,8 @@ const GET_ALL_ADMIN_ACCOUNT = async (req,res) => {
 
 const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
     try {
-        const {_id} = req.params
-        const findAdminAccount = await User.findOne({_id:_id})
+        const {userId} = req.params
+        const findAdminAccount = await User.findOne({userId:userId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find admin account");
@@ -221,6 +221,7 @@ const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
                 data:findAdminAccount
             }
         })
+
     } catch (error) {
         console.error(error)
         return res.send({
@@ -235,9 +236,8 @@ const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
 
 const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
     try {
-        const {comapanyUserId} = req.params
-        const findCompanyAccount = await Company.findOne({userId:comapanyUserId})
-        .populate('userId')
+        const {companyId} = req.params
+        const findCompanyAccount = await Company.findOne({companyId:companyId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find company account");
@@ -261,6 +261,7 @@ const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
                 data:findCompanyAccount
             }
         })
+
     } catch (error) {
         console.error(error);
         return res.send({
@@ -313,9 +314,9 @@ const GET_ALL_COMPANY_ACCOUNT = async (req,res) => {
 
 const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
     try {
-        const {adminUserId} = req.params
+        const {userId} = req.params
         const {email, password} = req.body;
-        const updateAdminAccount = await User.findByIdAndUpdate(adminUserId, {email: email, password: password})
+        const updateAdminAccount = await User.findByIdAndUpdate(userId, {email: email, password: password})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find and update admin account");
@@ -355,7 +356,7 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
-        const {companyUserId} = req.params
+        const {companyId} = req.params
         const updateUser = {
             password: req.body.password,
         }
@@ -367,8 +368,19 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
         }
         
         const hashPassword = bcrypt.hashSync(updateUser.password, saltRounds)
+        const findCompany = await Company.findOne({companyId: companyId})
 
-        const updateCompanyUserAccount = await User.findByIdAndUpdate(companyUserId, [{$set: {
+        if(!findCompany || findCompany === undefined || findCompany === null){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "Company not found"
+                }
+            })
+        }
+
+        const updateCompanyUserAccount = await User.findByIdAndUpdate(findCompany.userId, [{$set: {
             password:hashPassword, 
 
         }}], {session})
@@ -379,7 +391,7 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
         //run this user if does not upload new picture
         if(!req.file){
             await Company.findOneAndUpdate({
-                userId: companyUserId
+                companyId: companyId
                 },[{$set: {
                     ...registerCompany,
                 }}], {session})
@@ -397,7 +409,7 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
         
         //run this code if user upload new picture
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
-        const updateCompanyAccount = await Company.findOneAndUpdate({userId: updateCompanyUserAccount._id},[{
+        const updateCompanyAccount = await Company.findOneAndUpdate({companyId: companyId},[{
             $set: {
                 ...registerCompany,
                 imageUrl: uploadImage.url,
@@ -431,11 +443,28 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
 
 const DELETE_ADMIN_ACCOUNT = async (req, res) => {
     try {
-        const {adminUserId} = req.params
-
+        const {userId} = req.params
+        const findAdminAccount = await User.findOneAndDelete({userId: userId})
+        .catch((error) => {
+            throw new Error("an error occurred while deleting admin account")
+        })
         
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully deleted company and all associates",
+            }
+        })
     } catch (error) {
-        
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"Failed to update company account"
+            }
+        })
     }
 }
 
@@ -484,6 +513,7 @@ const DELETE_COMPANY_ACCOUNT = async (req, res) => {
         })
     }
 }
+
 module.exports= {
     ADD_ADMIN_ACCOUNT,
     GET_ALL_ADMIN_ACCOUNT,

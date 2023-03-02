@@ -111,7 +111,7 @@ const GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY = async (req, res)=>{
             throw new Error("Failed to find engineer account");
         })
 
-        if (!fetchAllEngineerData) {
+        if (!fetchAllEngineerData || fetchAllEngineerData.length === 0 || fetchAllEngineerData === {} ) {
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -185,7 +185,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
-        const {engineerUserId} = req.params
+        const {egnineerId} = req.params
         const userAccountInput = {
             password: req.body.password,
         } 
@@ -198,8 +198,9 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
         }
 
         const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
+        const findEngineerAccount = await Engineer.findOne({egnineerId: egnineerId})
         
-        const updateEngineerUserAccount = await User.findByIdAndUpdate(engineerUserId, [{
+        const updateEngineerUserAccount = await User.findByIdAndUpdate(findEngineerAccount.userId, [{
             $set:{ 
                 password: hashPassword
             }}], {session})
@@ -220,7 +221,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
 
         if(!req.file){
             await Engineer.findOneAndUpdate({
-                userId: updateEngineerUserAccount._id
+                egnineerId: egnineerId
                 },[{$set: {
                     ...engineerAccountInput,
                 }}], {session})
@@ -239,7 +240,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
         
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
             await Engineer.findOneAndUpdate({
-                userId: updateEngineerUserAccount._id
+                egnineerId: egnineerId
                 },[{$set: {
                     ...engineerAccountInput,
                     imageUrl: uploadImage.url

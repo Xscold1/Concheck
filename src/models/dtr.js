@@ -24,14 +24,6 @@ const dtrSchema = new Schema({
       type:Number,
       ref: 'project',
   },
-  companyId:{
-      type:Number,
-      ref: 'company',
-  },
-  engineerId:{
-      type:Number,
-      ref: 'engineer',
-  },
   crewId:{
       type:Number,
       ref: 'crew',

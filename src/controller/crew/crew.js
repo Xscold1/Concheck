@@ -20,7 +20,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
     const session = await conn.startSession();
     try {
         session.startTransaction();
-        const {crewUserId} = req.params
+        const {crewId} = req.params
         
         const crewInputInfo = {
             firstName: req.body.firstName,
@@ -33,8 +33,19 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             password: req.body.password,
         }
         const hashPassword = bcrypt.hashSync(userAccountDetails.password, saltRounds)
+        const findCrew = await findOne({crewId: crewId})
 
-        const updatePassword = await User.findOneAndUpdate(crewUserId,{password:hashPassword})
+        if(!findCrew || findCrew === undefined || findCrew === null) {
+            return res.send({
+                status: "FAILED",
+                statusCode:400,
+                response:{
+                    messsage: "Crew does not exist"
+                }
+            })
+        }
+
+        const updatePassword = await User.findOneAndUpdate(findCrew.userId,{password:hashPassword})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed To Update Account Details");
@@ -50,7 +61,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             })
         }
         if(!req.file){
-            const updateCrewAccountDetails = await Crew.findOneAndUpdate({userId: crewUserId}, {$set:{
+            const updateCrewAccountDetails = await Crew.findOneAndUpdate({crewId: crewId}, {$set:{
                 ...crewInputInfo,
             }
             }).populate('userId')
@@ -58,6 +69,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 console.error(error);
                 throw new Error("Failed To Update Account Details");
             })
+
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -67,7 +79,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             })
         }
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
-        const updateCrewAccountDetails = await Crew.findOneAndUpdate({userId: crewUserId}, {$set:{
+        const updateCrewAccountDetails = await Crew.findOneAndUpdate({crewId: crewId}, {$set:{
                 ...crewInputInfo,
                 imageUrl: uploadImage.url
             }
@@ -133,7 +145,12 @@ const TIMEIN = async (req, res) =>{
             })
         }
         
-        const newCrewTimeIn = new Dtr({timeIn: timeIn, date: date, crewId: crewId, dayToday: daysInWeek[now.getDay()]})
+        const newCrewTimeIn = new Dtr({
+            timeIn: timeIn,
+            date: date,
+            crewId: crewId,
+            dayToday: daysInWeek[now.getDay()]
+        })
 
         await newCrewTimeIn.save()
         .catch((error) =>{
@@ -172,7 +189,7 @@ const TIMEOUT = async (req, res) =>{
         const timeFormat = 'HH:mm';
 
         //update Dtr to accept Timeout and be use
-        const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId}).populate('crewId')
+        const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Error in Finding Dtr Record");
@@ -286,7 +303,7 @@ const GET_CREW_BY_ID = async (req, res) => {
     try {
         const {crewId} = req.params
 
-        const fetchCrewDetails = await Crew.findById(crewId).populate('userId')
+        const fetchCrewDetails = await Crew.findById(crewId)
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find crew account details");

@@ -24,14 +24,16 @@ const saltRounds = 10
 
 const ADD_TASK = async (req, res) => {
     try {
+
+        const {projectId} = req.params
         
-        const {taskName,startDate, endDate, _id} = req.body;
+        const {taskName,startDate, endDate} = req.body;
         
         const addTask = await Task.create({
             taskName:taskName,
             startDate:startDate,
             endDate:endDate,
-            projectId: _id,
+            projectId: projectId,
         }).catch((error) =>{
             console.error(error);
             throw new Error("Failed to add task");
@@ -101,7 +103,6 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
         session.startTransaction()
         const timeFormat = 'HH:mm';
         const dateFormat = 'dd-MM-yyyy'
-        const {_id} = req.params
         const {email , password , startShift, endShift, dailyRate, firstName, lastName} = req.body
 
         const endShiftParse = parse(endShift, timeFormat, new Date());
@@ -195,7 +196,7 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
 
 const UPLOAD_IMAGE = async (req,res)=>{
     try {
-        const {_id} = req.params
+        const {projectId} = req.params
         const images = req.files;
         const captions = req.body.caption;
 
@@ -214,7 +215,7 @@ const UPLOAD_IMAGE = async (req,res)=>{
             const newImage = new Image({
                 imageUrl: result.url,
                 caption: caption,
-                projectId: _id,
+                projectId: projectId,
                 date: date
             });
 
@@ -247,9 +248,9 @@ const UPLOAD_IMAGE = async (req,res)=>{
 
 const GET_ALL_TASK = async (req, res)=>{
     try {
-        const {_id} = req.params
+        const {projectId} = req.params
 
-        const fetchAlltask = await Task.find({projectId: _id})
+        const fetchAlltask = await Task.find({projectId: projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find Task");
@@ -288,9 +289,9 @@ const GET_ALL_TASK = async (req, res)=>{
 
 const GET_PROJECT_BY_ID = async (req, res) => {
     try {
-        const {_id} = req.params
+        const {projectId} = req.params
 
-        const fetchProjectDetails = await Project.findById(_id)
+        const fetchProjectDetails = await Project.findById(projectId)
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching project");
@@ -328,8 +329,8 @@ const GET_PROJECT_BY_ID = async (req, res) => {
 
 const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
     try {
-        const {_id} = req.params
-        const fetchAllCrew = await Crew.find({projectId:_id}).populate('userId')
+        const {projectId} = req.params
+        const fetchAllCrew = await Crew.find({projectId:projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching crew accounts");
@@ -367,8 +368,8 @@ const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
 
 const GET_DAILY_REPORT_BY_ID = async (req, res) => {
     try {
-        const {_id} = req.params
-        const fetchDailyReport = await DailyReport.findOne({_id}).populate('taskId')
+        const {dailyReportId} = req.params
+        const fetchDailyReport = await DailyReport.findOne({dailyReportId})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching daily report");
@@ -407,7 +408,7 @@ const GET_DAILY_REPORT_BY_ID = async (req, res) => {
 const GET_TASK_BY_ID = async (req, res) => {
     try {
         const {taskId} = req.params
-        const findTask = await Task.findOne({_id:taskId})
+        const findTask = await Task.findOne({taskId:taskId})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching task");
@@ -487,7 +488,7 @@ const EDIT_TASK = async (req, res) => {
         const {taskId} = req.params
         const {taskName, startDate, endDate} = req.body
 
-        const findTask = await Task.findByIdAndUpdate({_id: taskId},{$set:{taskName:taskName, startDate:startDate, endDate:endDate}})
+        const findTask = await Task.findByIdAndUpdate({taskId: taskId},{$set:{taskName:taskName, startDate:startDate, endDate:endDate}})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while updating task");

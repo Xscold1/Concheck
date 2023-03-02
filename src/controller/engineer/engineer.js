@@ -94,8 +94,8 @@ const CREATE_PROJECT = async (req, res) => {
 
 const GET_ALL_PROJECT = async (req, res) => {
     try {
-        const {projectEngineer} = req.params
-        const fetchAllProject = await Project.find({projectEngineer: projectEngineer})
+        const {engineerId} = req.params
+        const fetchAllProject = await Project.find({engineerId: engineerId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to to find project");
@@ -134,7 +134,7 @@ const GET_ALL_PROJECT = async (req, res) => {
 
 const EDIT_PROJECT = async (req, res) => {
     try {
-        const {_id} = req.params
+        const {projectId} = req.params
         const createProjectInfo = {
             siteEngineer:req.body.siteEngineer,
             safetyOfficer:req.body.safetyOfficer,
@@ -144,7 +144,7 @@ const EDIT_PROJECT = async (req, res) => {
         }
 
         if(!req.file){
-            const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
+            const findAndUpdateProject = await Project.findByIdAndUpdate(projectId, {
                 $set:{
                     ...createProjectInfo,
                 }})
@@ -162,7 +162,7 @@ const EDIT_PROJECT = async (req, res) => {
         }
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
-        const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
+        const findAndUpdateProject = await Project.findByIdAndUpdate(projectId, {
             $set:{
                 ...uploadImage,
                 imageUrl:uploadImage.url
@@ -197,14 +197,14 @@ const EDIT_PROJECT = async (req, res) => {
 
 const DELETE_PROJECT = async (req, res) => {
     try {
-        const {_id} = req.params
-        const findByIdAndDelete = await Project.findByIdAndDelete(_id)
+        const {projectId} = req.params
+        const findByIdAndDelete = await Project.findByIdAndDelete(projectId)
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to delete project");
         })
 
-        if(!findByIdAndDelete){
+        if(!findByIdAndDelete || findByIdAndDelete === undefined || findByIdAndDelete === null){
             return res.send({
                 status: "FAILED",
                 statusCode:400,

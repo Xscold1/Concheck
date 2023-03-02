@@ -61,10 +61,6 @@ const csvSchema = new Schema({
         type:Number,
         ref: 'company',
     },
-    engineerId:{
-        type:Number,
-        ref: 'engineer',
-    },
     crewId:{
         type:Number,
         ref: 'crew',
