@@ -1,7 +1,15 @@
 //models
-const Engineer = require('../../models/engineer');
-const Company = require('../../models/company');
-const User = require('../../models/user');
+const User = require('../../models/user')
+const Company = require('../../models/company')
+const Engineer = require('../../models/engineer')
+const Crew = require('../../models/crew')
+const Project = require('../../models/project')
+const Task = require('../../models/task')
+const Image = require('../../models/image')
+const Dtr = require('../../models/dtr')
+const Csv = require('../../models/csv')
+const dailyReport = require('../../models/dailyReport')
+
 
 //utils
 const cloudinary = require('../../utils/cloudinary')
@@ -274,10 +282,70 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
     session.endSession();
 }
 
+const DELETE_ENGINEER = async (req,res ) =>{
+    try {
+        const {engineerId} = req.params
+
+        const findEngineer = await Engineer.findOneAndDelete(engineerId)
+        .catch((error)=>{
+            throw new Error("An error occurred while trying to fetch engineer information")
+        })
+
+        if(!findEngineer || findEngineer === null || findEngineer === undefined){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Engineer does not exist"
+                }
+            })
+        }
+        
+        //find and map crew id to delete all the user account associated with crew schema
+
+        const findProject = await Project.find({engineerId: engineerId})
+        const projectIds = findProject.map(projectId => projectId.projectId)
+
+        const findCrew = await Crew.find({companyId: findEngineer.companyId})
+        const crewIds = findCrew.map(crewId => crewId.crewId)
+
+        
+        //delete everything account associated with company
+        await Promise.all([
+            Crew.deleteMany({projectId:{$in : projectIds}}),
+            User.deleteMany({$or: [{ userId: { $in: crewIds } },{ userId: { $in: findEngineer.engineerId } }]}),
+            Project.deleteMany({engineerId:engineerId}),
+            Image.deleteMany({projectId: {$in : projectIds }}),,
+            Task.deleteMany({projectId: {$in : projectIds }}),,
+            dailyReport.deleteMany({projectId: {$in : projectIds }}),,
+            Csv.deleteMany({projectId: {$in : projectIds }}),
+            Dtr.deleteMany({projectId: {$in : projectIds }}),
+            Engineer.deleteOne({engineerId:engineerId})
+        ])
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message: "Deleted Successfully"
+            }
+        })
+    } catch (error) {
+        console.error(error);
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"Failed to find engineer account"
+            }
+        })
+    }
+}
 
 module.exports = {
     ADD_ENGINEER_ACCOUNT,
     EDIT_ENGINEER_ACCOUNT,
     GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY,
-    GET_ENGINEER_ACCOUNT_BY_ID
+    GET_ENGINEER_ACCOUNT_BY_ID,
+    DELETE_ENGINEER
 }

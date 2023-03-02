@@ -13,5 +13,5 @@ router.put('/edit-admin-account/:userId', auth,adminController.EDIT_ADMIN_ACCOUN
 router.get('/get-admin-account-by-id/:userId', auth,adminController.GET_ADMIN_ACCOUNT_BY_ID)
 router.get('/get-company-account-by-id/:companyId', auth,adminController.GET_COMPANY_ACCOUNT_BY_ID)
 router.delete('/delete-company/:companyId', auth,adminController.DELETE_COMPANY_ACCOUNT)
-
+router.delete('/delete-admin/:userId', auth,adminController.DELETE_ADMIN_ACCOUNT)
 module.exports = router

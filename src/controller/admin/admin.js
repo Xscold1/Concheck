@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const cloudinary = require('../../utils/cloudinary')
-const Validation = require('../../utils/validation');
+
 //models 
 const User = require('../../models/user')
 const Company = require('../../models/company')
@@ -316,7 +316,7 @@ const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
     try {
         const {userId} = req.params
         const {email, password} = req.body;
-        const updateAdminAccount = await User.findByIdAndUpdate(userId, {email: email, password: password})
+        const updateAdminAccount = await User.findOneAndUpdate({userId:userId}, {email: email, password: password})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find and update admin account");
@@ -482,6 +482,9 @@ const DELETE_COMPANY_ACCOUNT = async (req, res) => {
 
         const findCompany = await Company.findOne({companyId:companyId})
         await User.deleteOne({userId:findCompany.userId})
+
+        const findProject = await Project.find({companyId: companyId})
+        const projectIds = findProject.map(projectId => projectId)
         //delete everything account associated with company
         await Promise.all([
             Crew.deleteMany({companyId:companyId}),
@@ -489,9 +492,11 @@ const DELETE_COMPANY_ACCOUNT = async (req, res) => {
             Engineer.deleteMany({userId:engineerUserId}),
             Project.deleteMany({companyId:companyId}),
             Company.deleteOne({companyId:companyId}),
-            Image.deleteMany({companyId: companyId}),
-            Task.deleteMany({companyId: companyId}),
-            dailyReport.deleteMany({companyId: companyId}),
+            Image.deleteMany({projectId: {$in : projectIds }}),,
+            Task.deleteMany({projectId: {$in : projectIds }}),,
+            dailyReport.deleteMany({projectId: {$in : projectIds }}),,
+            Csv.deleteMany({projectId: {$in : projectIds }}),
+            Dtr.deleteMany({projectId: {$in : projectIds }})
         ])
         
         res.send({

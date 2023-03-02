@@ -135,6 +135,8 @@ const TIMEIN = async (req, res) =>{
             throw new Error("Failed to find Existing Dtr");
         })
 
+        const findCrew = await Crew.findOne({crewId: crewId})
+
         if(existingDtr){
             return res.send({
                 status:"FAILED",
@@ -149,6 +151,7 @@ const TIMEIN = async (req, res) =>{
             timeIn: timeIn,
             date: date,
             crewId: crewId,
+            projectId: crewId.projectId,
             dayToday: daysInWeek[now.getDay()]
         })
 
@@ -258,7 +261,7 @@ const TIMEOUT = async (req, res) =>{
             const newCsvRecord = new Csv({
                 Name:"vash",
                 crewId:crewId,
-                projectId: checkIfTimeInExist.crewId.projectId,
+                projectId: checkIfTimeInExist.projectId,
                 [checkIfTimeInExist.dayToday]: remarks,
                 totalHoursWork:parseInt(hoursOfWork),
                 weeklySalary: weeklySalary

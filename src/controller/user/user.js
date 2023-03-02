@@ -44,7 +44,7 @@ const LOGIN = async (req, res) => {
         }
         if(checkEmail.roleId === "1" || checkEmail.roleId === 1){
 
-            const adminToken = tokenization.generateToken({userId:checkEmail.taskId, roleId:checkEmail.roleId})
+            const adminToken = tokenization.generateToken({id:checkEmail.taskId, roleId:checkEmail.roleId})
 
             return res.send({
                 status:"SUCCESS",
@@ -63,7 +63,7 @@ const LOGIN = async (req, res) => {
                 console.error(error);
                 throw new Error("Error in Fiding Dtr Record");
             })
-            const token = tokenization.generateToken({companyId: fetchCompanyInfo.companyId, roleId:checkEmail.roleId})
+            const token = tokenization.generateToken({id: fetchCompanyInfo.companyId, roleId:checkEmail.roleId})
             
             return res.send({
                 status:"SUCCESS",
@@ -80,7 +80,7 @@ const LOGIN = async (req, res) => {
                 console.error(error);
                 throw new Error("Error in Fiding Dtr Record");
             })
-            const token = tokenization.generateToken({ EngineerId: fetchEngineerInfo.EngineerId, roleId:checkEmail.roleId})
+            const token = tokenization.generateToken({ id: fetchEngineerInfo.EngineerId, roleId:checkEmail.roleId})
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -96,7 +96,7 @@ const LOGIN = async (req, res) => {
                 console.error(error);
                 throw new Error("Error in Fiding Dtr Record");
             })
-            const token = tokenization.generateToken({crewId: fetchCrewInfo.crewId, roleId:checkEmail.roleId})
+            const token = tokenization.generateToken({id: fetchCrewInfo.crewId, roleId:checkEmail.roleId})
 
             return res.send({
                 status:"SUCCESS",

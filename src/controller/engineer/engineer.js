@@ -144,7 +144,7 @@ const EDIT_PROJECT = async (req, res) => {
         }
 
         if(!req.file){
-            const findAndUpdateProject = await Project.findByIdAndUpdate(projectId, {
+            const findAndUpdateProject = await Project.findOneAndUpdate({projectId:projectId}, {
                 $set:{
                     ...createProjectInfo,
                 }})
@@ -198,7 +198,7 @@ const EDIT_PROJECT = async (req, res) => {
 const DELETE_PROJECT = async (req, res) => {
     try {
         const {projectId} = req.params
-        const findByIdAndDelete = await Project.findByIdAndDelete(projectId)
+        const findByIdAndDelete = await Project.findOneAndDelete({projectId: projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to delete project");

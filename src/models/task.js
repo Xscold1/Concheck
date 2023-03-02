@@ -19,14 +19,6 @@ const taskSchema = new Schema({
         type:Number,
         ref: 'project',
     },
-    companyId:{
-        type:Number,
-        ref: 'company',
-    },
-    engineerId:{
-        type:Number,
-        ref: 'engineer',
-    }
 })
 
 taskSchema.plugin(AutoIncrement, {inc_field: 'taskId'});

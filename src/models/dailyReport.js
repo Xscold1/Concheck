@@ -28,14 +28,6 @@ const dailyReportSchema = new Schema({
         type:Number,
         ref: 'project',
     },
-    companyId:{
-        type:Number,
-        ref: 'company',
-    },
-    engineerId:{
-        type:Number,
-        ref: 'engineer',
-    },
     taskId:{
         type:Number,
         ref:'task'  
