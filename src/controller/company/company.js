@@ -1,7 +1,15 @@
 //models
-const Engineer = require('../../models/engineer');
-const Company = require('../../models/company');
-const User = require('../../models/user');
+const User = require('../../models/user')
+const Company = require('../../models/company')
+const Engineer = require('../../models/engineer')
+const Crew = require('../../models/crew')
+const Project = require('../../models/project')
+const Task = require('../../models/task')
+const Image = require('../../models/image')
+const Dtr = require('../../models/dtr')
+const Csv = require('../../models/csv')
+const dailyReport = require('../../models/dailyReport')
+
 
 //utils
 const cloudinary = require('../../utils/cloudinary')
@@ -21,7 +29,8 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
     const session = await conn.startSession();
     try {
         session.startTransaction();
-        const {companyUserId} = req.params
+        const {companyId} = req.params
+
         const userAccountInput = {
             email: req.body.email,
             password: req.body.password
@@ -34,7 +43,11 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             address: req.body.address
         }
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        const checkIfCompanyExist = await Company.findOne({companyId : companyId})
 
+        if(!checkIfCompanyExist || checkIfCompanyExist === undefined || checkIfCompanyExist === []) {
+            throw new Error("Company does not exist");
+        }
         const checkEmailIfExists = await User.findOne({email: userAccountInput.email})
         .catch((error) =>{
             throw new Error("Failed to find user account");
@@ -59,18 +72,20 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             
         }], { session })
         .catch((error) =>{
+            console.error(error)
             throw new Error("Failed to create engineer account");
         })
 
-        let result = registerUser.map(a => a._id)
+        let result = registerUser.map(a => a.userId)
 
         await Engineer.create([{
             ...engineerAccountInput,
             imageUrl: uploadImage.url, 
             userId: result[0],
-            companyId: companyUserId
+            companyId: companyId
         }], { session })
         .catch((error) =>{
+            console.error(error)
             throw new Error("Failed to create engineer account");
         })
 
@@ -98,13 +113,13 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
 
 const GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY = async (req, res)=>{
     try {
-        const {companyUserId} = req.params
-        const fetchAllEngineerData = await Engineer.find({companyId:companyUserId}).populate('userId')
+        const {companyId} = req.params
+        const fetchAllEngineerData = await Engineer.find({companyId:companyId})
         .catch((error) =>{
             throw new Error("Failed to find engineer account");
         })
 
-        if (!fetchAllEngineerData) {
+        if (!fetchAllEngineerData || fetchAllEngineerData.length === 0 || fetchAllEngineerData === {} ) {
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -136,8 +151,8 @@ const GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY = async (req, res)=>{
 
 const GET_ENGINEER_ACCOUNT_BY_ID = async (req,res) => {
     try {
-        const {engineerUserId} = req.params
-        const findEngineerAccount = await Engineer.findOne({userId:engineerUserId}).populate('userId')
+        const {engineerId} = req.params
+        const findEngineerAccount = await Engineer.findOne({engineerId:engineerId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find engineer account");
@@ -178,7 +193,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
-        const {engineerUserId} = req.params
+        const {engineerId} = req.params
         const userAccountInput = {
             password: req.body.password,
         } 
@@ -191,8 +206,9 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
         }
 
         const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
+        const findEngineerAccount = await Engineer.findOne({engineerId: engineerId})
         
-        const updateEngineerUserAccount = await User.findByIdAndUpdate(engineerUserId, [{
+        const updateEngineerUserAccount = await User.findOneAndUpdate(findEngineerAccount.userId, [{
             $set:{ 
                 password: hashPassword
             }}], {session})
@@ -213,7 +229,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
 
         if(!req.file){
             await Engineer.findOneAndUpdate({
-                userId: updateEngineerUserAccount._id
+                engineerId: engineerId
                 },[{$set: {
                     ...engineerAccountInput,
                 }}], {session})
@@ -232,7 +248,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
         
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
             await Engineer.findOneAndUpdate({
-                userId: updateEngineerUserAccount._id
+                engineerId: engineerId
                 },[{$set: {
                     ...engineerAccountInput,
                     imageUrl: uploadImage.url
@@ -266,10 +282,70 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
     session.endSession();
 }
 
+const DELETE_ENGINEER = async (req,res ) =>{
+    try {
+        const {engineerId} = req.params
+
+        const findEngineer = await Engineer.findOneAndDelete(engineerId)
+        .catch((error)=>{
+            throw new Error("An error occurred while trying to fetch engineer information")
+        })
+
+        if(!findEngineer || findEngineer === null || findEngineer === undefined){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Engineer does not exist"
+                }
+            })
+        }
+        
+        //find and map crew id to delete all the user account associated with crew schema
+
+        const findProject = await Project.find({engineerId: engineerId})
+        const projectIds = findProject.map(projectId => projectId.projectId)
+
+        const findCrew = await Crew.find({companyId: findEngineer.companyId})
+        const crewIds = findCrew.map(crewId => crewId.crewId)
+
+        
+        //delete everything account associated with company
+        await Promise.all([
+            Crew.deleteMany({projectId:{$in : projectIds}}),
+            User.deleteMany({$or: [{ userId: { $in: crewIds } },{ userId: { $in: findEngineer.engineerId } }]}),
+            Project.deleteMany({engineerId:engineerId}),
+            Image.deleteMany({projectId: {$in : projectIds }}),,
+            Task.deleteMany({projectId: {$in : projectIds }}),,
+            dailyReport.deleteMany({projectId: {$in : projectIds }}),,
+            Csv.deleteMany({projectId: {$in : projectIds }}),
+            Dtr.deleteMany({projectId: {$in : projectIds }}),
+            Engineer.deleteOne({engineerId:engineerId})
+        ])
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message: "Deleted Successfully"
+            }
+        })
+    } catch (error) {
+        console.error(error);
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"Failed to find engineer account"
+            }
+        })
+    }
+}
 
 module.exports = {
     ADD_ENGINEER_ACCOUNT,
     EDIT_ENGINEER_ACCOUNT,
     GET_ALL_ENGINEER_ACCOUNT_BY_COMPANY,
-    GET_ENGINEER_ACCOUNT_BY_ID
+    GET_ENGINEER_ACCOUNT_BY_ID,
+    DELETE_ENGINEER
 }

@@ -15,6 +15,7 @@ const cloudinary = require('../../utils/cloudinary')
 
 const CREATE_PROJECT = async (req, res) => {
     try {
+        const {engineerId} = req.params
         const createProjectInfo = {
             projectName:req.body.projectName,
             startDate:req.body.startDate,
@@ -25,14 +26,13 @@ const CREATE_PROJECT = async (req, res) => {
             projectCode:req.body.projectCode,
             status:req.body.status, 
             budget:req.body.budget,
-            projectEngineerId: req.body._id
         }
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const checkProjecifExist = await Project.findOne({projectName: createProjectInfo.projectName})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to find project");
+            throw new Error("An error occurred while fetching project information");
         })
 
         if(checkProjecifExist){
@@ -44,9 +44,27 @@ const CREATE_PROJECT = async (req, res) => {
                 }
             })
         }
+        
+        const findEngineerIfExist = await Engineer.findOne({engineerId: engineerId})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("An error occurred while fetching engineer information");
+        })
+
+        if(!findEngineerIfExist || findEngineerIfExist === undefined || findEngineerIfExist === []){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "Engineer does not exist"
+                }
+            })
+        }
 
         const createProject = await Project.create({
             ...createProjectInfo,
+            companyId: findEngineerIfExist.companyId,
+            engineerId: findEngineerIfExist.engineerId,
             imageUrl: uploadImage.url
         })
         .catch((error) =>{
@@ -76,8 +94,8 @@ const CREATE_PROJECT = async (req, res) => {
 
 const GET_ALL_PROJECT = async (req, res) => {
     try {
-        const {projectEngineer} = req.params
-        const fetchAllProject = await Project.find({projectEngineer: projectEngineer})
+        const {engineerId} = req.params
+        const fetchAllProject = await Project.find({engineerId: engineerId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to to find project");
@@ -116,7 +134,7 @@ const GET_ALL_PROJECT = async (req, res) => {
 
 const EDIT_PROJECT = async (req, res) => {
     try {
-        const {_id} = req.params
+        const {projectId} = req.params
         const createProjectInfo = {
             siteEngineer:req.body.siteEngineer,
             safetyOfficer:req.body.safetyOfficer,
@@ -126,7 +144,7 @@ const EDIT_PROJECT = async (req, res) => {
         }
 
         if(!req.file){
-            const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
+            const findAndUpdateProject = await Project.findOneAndUpdate({projectId:projectId}, {
                 $set:{
                     ...createProjectInfo,
                 }})
@@ -144,7 +162,7 @@ const EDIT_PROJECT = async (req, res) => {
         }
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
-        const findAndUpdateProject = await Project.findByIdAndUpdate(_id, {
+        const findAndUpdateProject = await Project.findByIdAndUpdate(projectId, {
             $set:{
                 ...uploadImage,
                 imageUrl:uploadImage.url
@@ -179,14 +197,14 @@ const EDIT_PROJECT = async (req, res) => {
 
 const DELETE_PROJECT = async (req, res) => {
     try {
-        const {_id} = req.params
-        const findByIdAndDelete = await Project.findByIdAndDelete(_id)
+        const {projectId} = req.params
+        const findByIdAndDelete = await Project.findOneAndDelete({projectId: projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to delete project");
         })
 
-        if(!findByIdAndDelete){
+        if(!findByIdAndDelete || findByIdAndDelete === undefined || findByIdAndDelete === null){
             return res.send({
                 status: "FAILED",
                 statusCode:400,

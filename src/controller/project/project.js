@@ -24,14 +24,16 @@ const saltRounds = 10
 
 const ADD_TASK = async (req, res) => {
     try {
+
+        const {projectId} = req.params
         
-        const {taskName,startDate, endDate, _id} = req.body;
+        const {taskName,startDate, endDate} = req.body;
         
         const addTask = await Task.create({
             taskName:taskName,
             startDate:startDate,
             endDate:endDate,
-            projectId: _id,
+            projectId: projectId,
         }).catch((error) =>{
             console.error(error);
             throw new Error("Failed to add task");
@@ -97,11 +99,10 @@ const ADD_DAILY_REPORT = async (req,res)=>{
 const ADD_CREW_ACCOUNT = async (req, res) => {
     const session = await conn.startSession()
     try {
-
+        const {projectId} = req.params
         session.startTransaction()
         const timeFormat = 'HH:mm';
         const dateFormat = 'dd-MM-yyyy'
-        const {_id} = req.params
         const {email , password , startShift, endShift, dailyRate, firstName, lastName} = req.body
 
         const endShiftParse = parse(endShift, timeFormat, new Date());
@@ -125,6 +126,22 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             })
         }
         
+        const checkIfProjectExist = await Project.findOne({projectId:projectId})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("Failed to create Crew account");
+        })
+
+        if(!checkIfProjectExist || checkIfProjectExist === undefined || checkIfProjectExist === null){
+            return res.send({
+                status: "FAILED",
+                statusCode:400,
+                response:{
+                    messsage: "Project Not Found"
+                }
+            })
+        }
+
         const hashPassword = bcrypt.hashSync(password, saltRounds)
 
         const createCrewUserAccount = await User.create([{
@@ -137,7 +154,7 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             throw new Error("Failed to create crew account");
         })
 
-        let id = createCrewUserAccount.map(a => a._id)
+        let userId = createCrewUserAccount.map(a => a.userId)
 
         const createCrewAccount = await Crew.create([{
             firstName: firstName,
@@ -145,8 +162,9 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
             dailyRate:dailyRate,
             startShift:startShift,
             endShift:endShift,
-            userId:id[0],
-            projectId:_id,
+            userId:userId[0],
+            companyId:checkIfProjectExist.companyId,
+            projectId:projectId,
             hourlyRate: hourlyRate.toFixed(2),
         }], {session})
         .catch((error) =>{
@@ -178,7 +196,7 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
 
 const UPLOAD_IMAGE = async (req,res)=>{
     try {
-        const {_id} = req.params
+        const {projectId} = req.params
         const images = req.files;
         const captions = req.body.caption;
 
@@ -197,7 +215,7 @@ const UPLOAD_IMAGE = async (req,res)=>{
             const newImage = new Image({
                 imageUrl: result.url,
                 caption: caption,
-                projectId: _id,
+                projectId: projectId,
                 date: date
             });
 
@@ -230,9 +248,9 @@ const UPLOAD_IMAGE = async (req,res)=>{
 
 const GET_ALL_TASK = async (req, res)=>{
     try {
-        const {_id} = req.params
+        const {projectId} = req.params
 
-        const fetchAlltask = await Task.find({projectId: _id})
+        const fetchAlltask = await Task.find({projectId: projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find Task");
@@ -271,9 +289,9 @@ const GET_ALL_TASK = async (req, res)=>{
 
 const GET_PROJECT_BY_ID = async (req, res) => {
     try {
-        const {_id} = req.params
+        const {projectId} = req.params
 
-        const fetchProjectDetails = await Project.findById(_id)
+        const fetchProjectDetails = await Project.findById(projectId)
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching project");
@@ -311,8 +329,8 @@ const GET_PROJECT_BY_ID = async (req, res) => {
 
 const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
     try {
-        const {_id} = req.params
-        const fetchAllCrew = await Crew.find({projectId:_id}).populate('userId')
+        const {projectId} = req.params
+        const fetchAllCrew = await Crew.find({projectId:projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching crew accounts");
@@ -350,8 +368,8 @@ const GET_ALL_CREW_BY_PROJECT = async (req, res) => {
 
 const GET_DAILY_REPORT_BY_ID = async (req, res) => {
     try {
-        const {_id} = req.params
-        const fetchDailyReport = await DailyReport.findOne({_id}).populate('taskId')
+        const {dailyReportId} = req.params
+        const fetchDailyReport = await DailyReport.findOne({dailyReportId})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching daily report");
@@ -390,7 +408,7 @@ const GET_DAILY_REPORT_BY_ID = async (req, res) => {
 const GET_TASK_BY_ID = async (req, res) => {
     try {
         const {taskId} = req.params
-        const findTask = await Task.findOne({_id:taskId})
+        const findTask = await Task.findOne({taskId:taskId})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching task");
@@ -412,6 +430,83 @@ const GET_TASK_BY_ID = async (req, res) => {
             response:{
                 message:"Task Fetch successfully",
                 data:findTask
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while fetching tasks",
+            }
+        })
+    }
+}
+
+const GET_IMAGE_BY_PROJECT_ID = async (req, res)=>{
+    try {
+        const {projectId} = req.params
+
+        const findImageByProjectId = await Image.find({projectId:projectId})
+        .catch((error) => {
+            throw new Error("An error occurred while fetching image ")
+        })
+
+        if(!findImageByProjectId || findImageByProjectId === null || findImageByProjectId.length ===0 || findImageByProjectId === undefined){
+            return res.send({
+                status:"FAILED",
+                statusCode: 400,
+                response:{
+                    message: "There are no image"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode: 200,
+            response:{
+                message:"Successfully retrieved image",
+                data:findImageByProjectId,
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while fetching tasks",
+            }
+        })
+    }
+}
+
+const GET_IMAGE_BY_ID = async (req, res) => {
+    try {
+        const {imageId} = req.params
+
+        const findImage = await Image.findOne({imageId: imageId})
+        .catch((error)=>{
+            throw new Error("An error occurred while fetching Image infomation")
+        })
+        if(!findImage || findImage === undefined || findImage === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Image not found"
+                }
+            })
+        }
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Image fetch successfully",
+                data:findImage
             }
         })
     } catch (error) {
@@ -470,7 +565,7 @@ const EDIT_TASK = async (req, res) => {
         const {taskId} = req.params
         const {taskName, startDate, endDate} = req.body
 
-        const findTask = await Task.findByIdAndUpdate({_id: taskId},{$set:{taskName:taskName, startDate:startDate, endDate:endDate}})
+        const findTask = await Task.findByIdAndUpdate({taskId: taskId},{$set:{taskName:taskName, startDate:startDate, endDate:endDate}})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while updating task");
@@ -551,6 +646,45 @@ const EDIT_DAILY_REPORT = async (req, res) => {
     }
 }
 
+const EDIT_IMAGE = async(req,res) => {
+    try {
+        const {imageId} = req.params
+        const {caption} = req.body
+        const findImageAndUpdate = await Image.findOneAndUpdate({imageId: imageId} ,{$set:{caption:caption}})
+        .catch((error)=>{
+            throw new Error("An error occurred while updating image")
+        })
+
+        if(!findImageAndUpdate || findImageAndUpdate === undefined || findImageAndUpdate === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"An error occurred while updating image"
+                }
+            })
+        }
+
+        
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Image updated successfully",
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while fetching tasks",
+            }
+        })
+    }
+}
+
 const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
     try {
         const {projectId} = req.params
@@ -618,6 +752,166 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
     }
 }
 
+const DELETE_TASK = async (req,res) => {
+    try {
+        const {taskId} = req.params
+
+        const findTaskAndDelete = await Task.findOneAndDelete({taskId: taskId})
+        .catch((error) => {
+            throw new Error("An error occurred while deleting task");
+        })
+
+        if (!findTaskAndDelete || findTaskAndDelete === undefined || findTaskAndDelete === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "An error occurred while deleting task",
+                }
+            })
+        }
+
+        res.send({
+            statusbar: "SUCCESS",
+            statusCode:200,
+            response:{
+                message: "Task deleted successfully"
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while deleting tasks",
+            }
+        })
+    }
+}
+
+const DELETE_DAILY_REPORT = async (req,res) => {
+    try {
+        const {dailyReportId} = req.params
+
+        const findDailyReportAndDelete = await DailyReport.findOneAndDelete({dailyReportId: dailyReportId})
+        .catch((error) => {
+            throw new Error("An error occurred while deleting daily report");
+        })
+
+        if (!findDailyReportAndDelete || findDailyReportAndDelete === undefined || findDailyReportAndDelete === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "An error occurred while deleting daily report",
+                }
+            })
+        }
+
+        res.send({
+            statusbar: "SUCCESS",
+            statusCode:200,
+            response:{
+                message: "daily report deleted successfully"
+            }
+        })
+
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while deleting daily report",
+            }
+        })
+    }
+}
+
+const DELETE_IMAGE_BY_ID = async (req,res) => {
+    try {
+        const {imageId} = req.params
+
+        const findImageAndDelete = await Image.findOneAndDelete({imageId: imageId})
+        .catch((error) => {
+            throw new Error("An error occurred while deleting image");
+        })
+
+        if (!findImageAndDelete || findImageAndDelete === undefined || findImageAndDelete === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "An error occurred while deleting image",
+                }
+            })
+        }
+
+        res.send({
+            statusbar: "SUCCESS",
+            statusCode:200,
+            response:{
+                message: "image deleted successfully"
+            }
+        })
+
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while deleting image",
+            }
+        })
+    }
+}
+
+const DELETE_CREW = async (req,res) =>{
+    try {
+        const {crewId} = req.params
+
+        const findCrew = await Crew.findOne({crewId: crewId})
+        .catch((error)=>{
+            throw new Error("An error occurred while fetching crew information")
+        })
+
+        if(!findCrew || findCrew === undefined || findCrew === null){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message: "crew does not exist",
+                }
+            })
+        }
+
+        await Promise.all([
+            Crew.deleteOne({crewId: crewId}),
+            Dtr.deleteMany({crewId:crewId}),
+            User.deleteOne({userId: findCrew.userId})
+        ])
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Crew deleted successfully",
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while deleting image",
+            }
+        })
+    }
+}
+
 module.exports = {
     ADD_TASK,
     ADD_CREW_ACCOUNT,
@@ -627,10 +921,16 @@ module.exports = {
     GET_PROJECT_BY_ID,
     GET_ALL_CREW_BY_PROJECT,
     GET_DAILY_REPORT_BY_ID,
+    GET_IMAGE_BY_ID,
     GET_TASK_BY_ID,
     GET_ALL_DAILY_REPORT_BY_PROJECT,
+    GET_IMAGE_BY_PROJECT_ID,
     EDIT_TASK,
     EDIT_DAILY_REPORT,
-    DOWNLOAD_CSV_BY_PROJECT
-    
+    EDIT_IMAGE,
+    DOWNLOAD_CSV_BY_PROJECT,
+    DELETE_TASK,
+    DELETE_DAILY_REPORT,
+    DELETE_IMAGE_BY_ID,
+    DELETE_CREW
 }

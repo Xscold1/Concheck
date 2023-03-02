@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const dtrSchema = new Schema({
 
@@ -19,11 +20,16 @@ const dtrSchema = new Schema({
       type:String,
    },
    
-   crewId:{
-      type:mongoose.Schema.Types.ObjectId,
-      ref:'crew'
-   },
+   projectId: {
+      type:Number,
+      ref: 'project',
+  },
+  crewId:{
+      type:Number,
+      ref: 'crew',
+  }
 
 })
+dtrSchema.plugin(AutoIncrement, {inc_field: 'dtrId'});
 
 module.exports = Dtr = mongoose.model('dtr', dtrSchema);

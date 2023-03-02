@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const dailyReportSchema = new Schema({
     remarks: {
@@ -24,13 +25,13 @@ const dailyReportSchema = new Schema({
     },
     
     projectId: {
-        type:mongoose.Schema.Types.ObjectId,
-        ref: 'projects'
+        type:Number,
+        ref: 'project',
     },
     taskId:{
-        type:mongoose.Schema.Types.ObjectId,
+        type:Number,
         ref:'task'  
     }
 })
-
+dailyReportSchema.plugin(AutoIncrement, {inc_field: 'dailyReportId'});
 module.exports = DailyReport = mongoose.model('dailyReport', dailyReportSchema);

@@ -2,20 +2,25 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const cloudinary = require('../../utils/cloudinary')
-const Validation = require('../../utils/validation');
+
 //models 
 const User = require('../../models/user')
 const Company = require('../../models/company')
+const Engineer = require('../../models/engineer')
+const Crew = require('../../models/crew')
+const Project = require('../../models/project')
+const Task = require('../../models/task')
+const Image = require('../../models/image')
+const Dtr = require('../../models/dtr')
+const Csv = require('../../models/csv')
+const dailyReport = require('../../models/dailyReport')
 
 //library
 const bcrypt = require('bcrypt');
 const saltRounds = 10
 
 const ADD_ADMIN_ACCOUNT = async (req, res) => {
-    try {
-
-        // const input = req.body;
-        // const checkValidity = Validation(input, User)
+    try { 
         const {email, password} = req.body;
         const checkAdminIfExist = await User.findOne({email: email})
         .catch((error) =>{
@@ -107,11 +112,11 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
             throw new Error("Failed to Create Company User Account");
         }
 
-        let id = createCompanyUserAccount.map(a => a._id)
+        let userId = createCompanyUserAccount.map(a => a.userId)
 
         const createCompany = await Company.create([{
            ...registerCompany,
-           userId: id[0],
+           userId: userId[0],
            imageUrl: uploadImage.url
         }], {session})
         .catch((error) =>{
@@ -188,8 +193,8 @@ const GET_ALL_ADMIN_ACCOUNT = async (req,res) => {
 
 const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
     try {
-        const {_id} = req.params
-        const findAdminAccount = await User.findOne({_id:_id})
+        const {userId} = req.params
+        const findAdminAccount = await User.findOne({userId:userId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find admin account");
@@ -213,6 +218,7 @@ const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
                 data:findAdminAccount
             }
         })
+
     } catch (error) {
         console.error(error)
         return res.send({
@@ -227,9 +233,8 @@ const GET_ADMIN_ACCOUNT_BY_ID = async (req, res) => {
 
 const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
     try {
-        const {comapanyUserId} = req.params
-        const findCompanyAccount = await Company.findOne({userId:comapanyUserId})
-        .populate('userId')
+        const {companyId} = req.params
+        const findCompanyAccount = await Company.findOne({companyId:companyId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find company account");
@@ -253,6 +258,7 @@ const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
                 data:findCompanyAccount
             }
         })
+
     } catch (error) {
         console.error(error);
         return res.send({
@@ -267,7 +273,7 @@ const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
 
 const GET_ALL_COMPANY_ACCOUNT = async (req,res) => {
     try {
-        const fetchAllCompanyData = await Company.find({roleId:"2"}).populate('userId')
+        const fetchAllCompanyData = await Company.find({roleId:"2"})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find company account");
@@ -305,9 +311,9 @@ const GET_ALL_COMPANY_ACCOUNT = async (req,res) => {
 
 const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
     try {
-        const {adminUserId} = req.params
+        const {userId} = req.params
         const {email, password} = req.body;
-        const updateAdminAccount = await User.findByIdAndUpdate(adminUserId, {email: email, password: password})
+        const updateAdminAccount = await User.findOneAndUpdate({userId:userId}, {email: email, password: password})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find and update admin account");
@@ -347,7 +353,7 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
-        const {companyUserId} = req.params
+        const {companyId} = req.params
         const updateUser = {
             password: req.body.password,
         }
@@ -357,27 +363,25 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
             address: req.body.address,
             contactNumber: req.body.contactNumber
         }
-        
+
         const hashPassword = bcrypt.hashSync(updateUser.password, saltRounds)
 
-        const updateCompanyUserAccount = await User.findByIdAndUpdate(companyUserId, [{$set: {
-            password:hashPassword, 
-
-        }}], {session})
-        .catch((error) =>{
-            throw new Error("Failed to update company account");
-        })
-        
-        //run this user if does not upload new picture
         if(!req.file){
-            await Company.findOneAndUpdate({
-                userId: companyUserId
-                },[{$set: {
-                    ...registerCompany,
-                }}], {session})
-            .catch((error) =>{
+            const findCompany = await Company.findOneAndUpdate({companyId:companyId}, {$set:{...registerCompany}})
+            .catch((error)=>{
+                console.error(error)
                 throw new Error("Failed to update company account");
             })
+
+            const updateCompanyUserAccount = await User.findOneAndUpdate({userId: findCompany.companyId}, [{
+                $set:{
+                password: hashPassword,
+            }}], {session})
+            .catch((error) =>{
+                console.error(error)
+                throw new Error("Failed to update company account");
+            })
+
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -386,18 +390,88 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
                 }
             })
         }
-        
-        //run this code if user upload new picture
+
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
-        const updateCompanyAccount = await Company.findOneAndUpdate({userId: updateCompanyUserAccount._id},[{
+        const updateCompanyAccount = await Company.findOneAndUpdate({companyId: companyId},[{
             $set: {
-                ...registerCompany,
+                companyName: registerCompany.companyName,
+                address: registerCompany.address,
+                contactNumber: registerCompany.contactNumber,
                 imageUrl: uploadImage.url,
             }}], {session})
         .catch((error) =>{
             throw new Error("Failed to update company account");
         })
 
+        const updateCompanyUserAccount = await User.findOneAndUpdate({userId: updateCompanyAccount.companyId}, [{$set: {
+            password: hashPassword,
+        }}], {session})
+        .catch((error) =>{
+            console.error(error)
+            throw new Error("Failed to update company account");
+        })
+
+        
+        
+
+        // if(!req.file){
+        //     const updateCompanyAccount = await Company.findOneAndUpdate({companyId:findCompany.companyId},[{
+        //         $set: {
+        //             companyName: registerCompany.companyName,
+        //             address: registerCompany.address,
+        //             contactNumber: registerCompany.contactNumber
+        //         }}], {session})
+        //     .catch((error) =>{
+        //         throw new Error("Failed to update company account");
+        //     })
+            
+        //     console.log(updateCompanyAccount, "updateCompanyAccount")
+
+        //     const updateCompanyUserAccount = await User.findOneAndUpdate({userId: findCompany.companyId}, [{
+        //         $set:{
+        //         password: hashPassword,
+        //     }}], {session})
+        //     .catch((error) =>{
+        //         console.error(error)
+        //         throw new Error("Failed to update company account");
+        //     })
+            
+        //     console.log("updateCompanyUserAccount", updateCompanyUserAccount)
+
+        //     return res.send({
+        //         status:"SUCCESS",
+        //         statusCode:200,
+        //         response:{
+        //             message:"Account Updated Successfully"
+        //         }
+        //     })
+        // }
+        
+        // //run this code if user upload new picture
+        // const uploadImage = await cloudinary.uploader.upload(req.file.path)
+        // const updateCompanyAccount = await Company.findOneAndUpdate({companyId: findCompany.companyId},[{
+        //     $set: {
+        //         companyName: registerCompany.companyName,
+        //         address: registerCompany.address,
+        //         contactNumber: registerCompany.contactNumber,
+        //         imageUrl: uploadImage.url,
+        //     }}], {session})
+        // .catch((error) =>{
+        //     throw new Error("Failed to update company account");
+        // })
+
+        // const updateCompanyUserAccount = await User.findOneAndUpdate({userId: findCompany.companyId}, [{$set: {
+        //     password: hashPassword,
+        // }}], {session})
+        // .catch((error) =>{
+        //     console.error(error)
+        //     throw new Error("Failed to update company account");
+        // })
+
+
+        //run this user if does not upload new picture
+        
+        await session.commitTransaction();
         res.send({
             status:"SUCCESS",
             statusCode:200,
@@ -405,7 +479,7 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
                 message:"Account Updated Successfully"
             }
         })
-        await session.commitTransaction();
+        
 
     } catch (error) {
         console.error(error)
@@ -417,27 +491,90 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
             }
         })
         await session.abortTransaction();
+    }finally {
+        session.endSession();
     }
-    session.endSession();
+    
 }
 
 const DELETE_ADMIN_ACCOUNT = async (req, res) => {
     try {
-        const {adminUserId} = req.params
-
+        const {userId} = req.params
+        const findAdminAccount = await User.findOneAndDelete({userId: userId})
+        .catch((error) => {
+            throw new Error("an error occurred while deleting admin account")
+        })
         
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully deleted company and all associates",
+            }
+        })
     } catch (error) {
-        
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"Failed to update company account"
+            }
+        })
     }
 }
 
 const DELETE_COMPANY_ACCOUNT = async (req, res) => {
     try {
+        const {companyId} = req.params
         
+        //find and map engineer id to delete all the user account associated with engineer schema
+        const findEngineerViaCompanyId = await Engineer.find({companyId:companyId})
+        const engineerUserId = findEngineerViaCompanyId.map(userId => userId.userId)
+        
+        //find and map crew id to delete all the user account associated with crew schema
+        const findCrewByCompanyId = await Crew.find({companyId:companyId})
+        const crewUserIds = findCrewByCompanyId.map(userId => userId.userId)
+
+        const findCompany = await Company.findOne({companyId:companyId})
+        await User.deleteOne({userId:findCompany.userId})
+
+        const findProject = await Project.find({companyId: companyId})
+        const projectIds = findProject.map(projectId => projectId)
+        //delete everything account associated with company
+        await Promise.all([
+            Crew.deleteMany({companyId:companyId}),
+            User.deleteMany({$or: [{ userId: { $in: crewUserIds } },{ userId: { $in: engineerUserId } }, { userId: findCompany.userId }]}),
+            Engineer.deleteMany({userId:engineerUserId}),
+            Project.deleteMany({companyId:companyId}),
+            Company.deleteOne({companyId:companyId}),
+            Image.deleteMany({projectId: {$in : projectIds }}),,
+            Task.deleteMany({projectId: {$in : projectIds }}),,
+            dailyReport.deleteMany({projectId: {$in : projectIds }}),,
+            Csv.deleteMany({projectId: {$in : projectIds }}),
+            Dtr.deleteMany({projectId: {$in : projectIds }})
+        ])
+        
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Successfully deleted company and all associates",
+            }
+        })
+
     } catch (error) {
-        
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"Failed to update company account"
+            }
+        })
     }
 }
+
 module.exports= {
     ADD_ADMIN_ACCOUNT,
     GET_ALL_ADMIN_ACCOUNT,

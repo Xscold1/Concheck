@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const csvSchema = new Schema({
     
@@ -52,15 +53,15 @@ const csvSchema = new Schema({
         default:0
     },
 
+    projectId: {
+        type:Number,
+        ref: 'project',
+    },
     crewId:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:('crew')
-    },
-    porojectId:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:('project')
-    },
+        type:Number,
+        ref: 'crew',
+    }
 
 })
-
+csvSchema.plugin(AutoIncrement, {inc_field: 'csvId'});
 module.exports = Csv = mongoose.model('csv', csvSchema);
