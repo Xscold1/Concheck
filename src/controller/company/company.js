@@ -193,7 +193,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
     const session = await conn.startSession()
     try {
         session.startTransaction()
-        const {egnineerId} = req.params
+        const {engineerId} = req.params
         const userAccountInput = {
             password: req.body.password,
         } 
@@ -206,9 +206,9 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
         }
 
         const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
-        const findEngineerAccount = await Engineer.findOne({egnineerId: egnineerId})
+        const findEngineerAccount = await Engineer.findOne({engineerId: engineerId})
         
-        const updateEngineerUserAccount = await User.findByIdAndUpdate(findEngineerAccount.userId, [{
+        const updateEngineerUserAccount = await User.findOneAndUpdate(findEngineerAccount.userId, [{
             $set:{ 
                 password: hashPassword
             }}], {session})
@@ -229,7 +229,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
 
         if(!req.file){
             await Engineer.findOneAndUpdate({
-                egnineerId: egnineerId
+                engineerId: engineerId
                 },[{$set: {
                     ...engineerAccountInput,
                 }}], {session})
@@ -248,7 +248,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
         
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
             await Engineer.findOneAndUpdate({
-                egnineerId: egnineerId
+                engineerId: engineerId
                 },[{$set: {
                     ...engineerAccountInput,
                     imageUrl: uploadImage.url
