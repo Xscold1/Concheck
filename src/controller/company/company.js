@@ -208,36 +208,22 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
         const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
         const findEngineerAccount = await Engineer.findOne({engineerId: engineerId})
         
-        const updateEngineerUserAccount = await User.findOneAndUpdate(findEngineerAccount.userId, [{
-            $set:{ 
-                password: hashPassword
-            }}], {session})
-            .catch((error) =>{
-                console.error(error);
-                throw new Error("Failed to find engineer account");
-            })
-        
-        if(!updateEngineerUserAccount){
-            return res.send({
-                status:"FAILED",
-                statusCode:400,
-                response:{
-                    message:"Failed to Update Account"
-                }
-            })
-        }
-
         if(!req.file){
-            await Engineer.findOneAndUpdate({
-                engineerId: engineerId
-                },[{$set: {
-                    ...engineerAccountInput,
+            const updateEngineerUserAccount = await User.findOneAndUpdate({userId: findEngineerAccount.userId}, [{
+                $set:{ 
+                    password: hashPassword
                 }}], {session})
-            .catch((error) =>{
-                console.error(error);
-                throw new Error("Failed to find engineer account");
-            })
-           return res.send({
+                .catch((error) =>{
+                    console.error(error);
+                    throw new Error("Failed to find engineer account");
+                })
+
+            const updateEngineerAccount = await Engineer.findOneAndUpdate({engineerId:engineerId}, [{$set:{
+                ...engineerAccountInput
+            } }], {session})
+
+            await session.commitTransaction();
+            return res.send({
                 status:"SUCCESS",
                 statusCode:200,
                 response:{
@@ -256,8 +242,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Failed to find engineer account");
-            })
-        
+        })
 
         res.send({
             status:"SUCCESS",
@@ -307,13 +292,13 @@ const DELETE_ENGINEER = async (req,res ) =>{
         const projectIds = findProject.map(projectId => projectId.projectId)
 
         const findCrew = await Crew.find({companyId: findEngineer.companyId})
+        const crewUserId = findCrew.map(userId => userId.userId)
         const crewIds = findCrew.map(crewId => crewId.crewId)
-
         
         //delete everything account associated with company
         await Promise.all([
             Crew.deleteMany({projectId:{$in : projectIds}}),
-            User.deleteMany({$or: [{ userId: { $in: crewIds } },{ userId: { $in: findEngineer.userId } }]}),
+            User.deleteMany({$or: [{ userId: { $in: crewUserId } }, { userId: { $in: findEngineer.userId } }]}),
             Project.deleteMany({engineerId:engineerId}),
             Image.deleteMany({projectId: {$in : projectIds }}),,
             Task.deleteMany({projectId: {$in : projectIds }}),,

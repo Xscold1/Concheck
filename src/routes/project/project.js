@@ -5,7 +5,7 @@ const upload = require('../../middleware/upload');
 const auth = require('../../middleware/auth');
 
 router.post('/add-crew-account/:projectId', auth,projectController.ADD_CREW_ACCOUNT)
-router.post('/add-task',auth, projectController.ADD_TASK)
+router.post('/add-task/:projectId',auth, projectController.ADD_TASK)
 router.post('/add-daily-report/:projectId', auth,projectController.ADD_DAILY_REPORT)
 router.post('/upload-image/:projectId', auth , upload.array('imageUrl'),projectController.UPLOAD_IMAGE)
 router.get('/get-project-by-id/:projectId', auth,projectController.GET_PROJECT_BY_ID)

@@ -202,6 +202,23 @@ const UPLOAD_IMAGE = async (req,res)=>{
 
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
+
+        const checkIfProjectExist = await Project.findOne({projectId:projectId})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("Failed to save images")
+        })
+
+        if(!checkIfProjectExist || checkIfProjectExist === undefined || checkIfProjectExist === null){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Project do not exist "
+                }
+            })
+        }
+
         // Iterate over the uploaded images and captions
         for (let i = 0; i < images.length; i++) {
             const image = images[i];
