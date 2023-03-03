@@ -22,7 +22,7 @@ const LOGIN = async (req, res) => {
             throw new Error("No account found.");
         })
 
-        if (!checkEmail){
+        if (!checkEmail || checkEmail === undefined || checkEmail === null){
             return res.send({
                 status: "FAILED",
                 statusCode:404,
