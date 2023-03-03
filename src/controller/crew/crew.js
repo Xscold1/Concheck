@@ -64,7 +64,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             const updateCrewAccountDetails = await Crew.findOneAndUpdate({crewId: crewId}, {$set:{
                 ...crewInputInfo,
             }
-            }).populate('userId')
+            })
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Failed To Update Account Details");

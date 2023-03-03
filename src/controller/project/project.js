@@ -565,7 +565,7 @@ const EDIT_TASK = async (req, res) => {
         const {taskId} = req.params
         const {taskName, startDate, endDate} = req.body
 
-        const findTask = await Task.findByIdAndUpdate({taskId: taskId},{$set:{taskName:taskName, startDate:startDate, endDate:endDate}})
+        const findTask = await Task.findOneAndUpdate({taskId: taskId},{$set:{taskName:taskName, startDate:startDate, endDate:endDate}})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while updating task");
