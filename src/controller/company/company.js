@@ -271,7 +271,7 @@ const DELETE_ENGINEER = async (req,res ) =>{
     try {
         const {engineerId} = req.params
 
-        const findEngineer = await Engineer.findOneAndDelete(engineerId)
+        const findEngineer = await Engineer.findOne({engineerId: engineerId})
         .catch((error)=>{
             throw new Error("An error occurred while trying to fetch engineer information")
         })
@@ -292,13 +292,13 @@ const DELETE_ENGINEER = async (req,res ) =>{
         const projectIds = findProject.map(projectId => projectId.projectId)
 
         const findCrew = await Crew.find({companyId: findEngineer.companyId})
+        const crewUserId = findCrew.map(userId => userId.userId)
         const crewIds = findCrew.map(crewId => crewId.crewId)
-
         
         //delete everything account associated with company
         await Promise.all([
             Crew.deleteMany({projectId:{$in : projectIds}}),
-            User.deleteMany({$or: [{ userId: { $in: crewIds } },{ userId: { $in: findEngineer.userId } }]}),
+            User.deleteMany({$or: [{ userId: { $in: crewUserId } }, { userId: { $in: findEngineer.userId } }]}),
             Project.deleteMany({engineerId:engineerId}),
             Image.deleteMany({projectId: {$in : projectIds }}),,
             Task.deleteMany({projectId: {$in : projectIds }}),,

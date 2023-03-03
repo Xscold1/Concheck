@@ -17,7 +17,8 @@ const Task = require('../../models/task');
 const DailyReport = require('../../models/dailyReport');
 
 //utils
-const cloudinary = require('../../utils/cloudinary')
+const cloudinary = require('../../utils/cloudinary');
+const dailyReport = require('../../models/dailyReport');
 
 //global variables
 const saltRounds = 10
@@ -64,13 +65,16 @@ const ADD_DAILY_REPORT = async (req,res)=>{
         const {projectId} = req.params
         const {remarks, weatherReport, causeOfDelay, hoursDelay} = req.body
 
+        const now = new Date();
+        const date = format(now, 'yyyy-MM-dd');
+
         const insertDailyReport = await DailyReport.create({
             remarks:remarks,
             weatherReport:weatherReport,
             causeOfDelay:causeOfDelay,
             hoursDelay:hoursDelay,
             projectId: projectId,
-            date:Date.now()
+            date:date
         }).catch((error) =>{
             console.error(error);
             throw new Error("Failed to create DailyReport");
@@ -202,6 +206,23 @@ const UPLOAD_IMAGE = async (req,res)=>{
 
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
+
+        const checkIfProjectExist = await Project.findOne({projectId:projectId})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("Failed to save images")
+        })
+
+        if(!checkIfProjectExist || checkIfProjectExist === undefined || checkIfProjectExist === null){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Project do not exist "
+                }
+            })
+        }
+
         // Iterate over the uploaded images and captions
         for (let i = 0; i < images.length; i++) {
             const image = images[i];
@@ -432,6 +453,47 @@ const GET_TASK_BY_ID = async (req, res) => {
                 data:findTask
             }
         })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while fetching tasks",
+            }
+        })
+    }
+}
+
+const GET_DAILY_REPORT_BY_DATE = async (req, res) => {
+    try {
+        const {date, projectId} = req.params
+
+        const findDailyReport = await dailyReport.findOne({projectId: projectId, date: date})
+        .catch((error) => {
+            console.error(error)
+            throw new Error ("An error occurred while fetching daily reports")
+        })
+
+        
+        if(!findDailyReport || findDailyReport === undefined || findDailyReport === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"daily report does not exist",
+                }
+            })
+        }
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Fetching daily reports successfully",
+                data:findDailyReport,
+            }
+        })
+        
     } catch (error) {
         console.error(error)
         res.send({
@@ -694,7 +756,8 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
         const date = format(now, 'yyyy-MM-dd');
         const timeIn = format(now, 'HH:mm:ss');
         // Get all the CSV data from the database
-        const csvData = await Csv.find({projectId: projectId}).populate('projectId')
+        const findProject = await Project.findOne({projectId:projectId})
+        const csvData = await Csv.find({projectId: projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching csv data from the database");
@@ -720,7 +783,7 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
 
         // Create the CSV writer with the defined headers
         const csvWriter = createCsvWriter({
-            path: path.join(DOWNLOAD_DIR, `${date}-crewRecord.csv - ${csvData.projectId.projectName}`),
+            path: path.join(DOWNLOAD_DIR, `${date}-crewRecord - ${findProject.projectName}.csv`),
             header: csvHeaders
         });
 
@@ -924,6 +987,7 @@ module.exports = {
     GET_IMAGE_BY_ID,
     GET_TASK_BY_ID,
     GET_ALL_DAILY_REPORT_BY_PROJECT,
+    GET_DAILY_REPORT_BY_DATE,
     GET_IMAGE_BY_PROJECT_ID,
     EDIT_TASK,
     EDIT_DAILY_REPORT,

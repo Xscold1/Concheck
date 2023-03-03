@@ -151,7 +151,7 @@ const TIMEIN = async (req, res) =>{
             timeIn: timeIn,
             date: date,
             crewId: crewId,
-            projectId: crewId.projectId,
+            projectId: findCrew.projectId,
             dayToday: daysInWeek[now.getDay()]
         })
 
@@ -192,10 +192,26 @@ const TIMEOUT = async (req, res) =>{
         const timeFormat = 'HH:mm';
 
         //update Dtr to accept Timeout and be use
+        const findCrew = await Crew.findOne({crewId:crewId})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("An error occurred while trying to find crew");
+        })
+
+        if(!findCrew){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Crew does not exist"
+                }
+            })
+        }
+
         const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Error in Finding Dtr Record");
+            throw new Error("An error occured while trying to find dtr");
         })
 
         if(!checkIfTimeInExist){
@@ -209,7 +225,7 @@ const TIMEOUT = async (req, res) =>{
         }
 
         //check if the crew has already time out for the day
-        if(checkIfTimeInExist.timeOut === {}){
+        if(checkIfTimeInExist.timeOut !== {} || !checkIfTimeInExist.timeOut || checkIfTimeInExist.timeOut === undefined){
             return res.send({
                 status:"FAILED",
                 statusCode:400,
@@ -222,8 +238,8 @@ const TIMEOUT = async (req, res) =>{
         //parse date and time for computation
         const timeInParse = parse(checkIfTimeInExist.timeIn, timeFormat, new Date());
         const timeOutParse = parse(timeOut, timeFormat, new Date());
-        const startShiftParse = parse(checkIfTimeInExist.crewId.startShift, timeFormat, new Date());
-        const endShiftParse = parse(checkIfTimeInExist.crewId.endShift, timeFormat, new Date());
+        const startShiftParse = parse(findCrew.startShift, timeFormat, new Date());
+        const endShiftParse = parse(findCrew.endShift, timeFormat, new Date());
 
         //actual computation
         let hoursOfWork = ((timeOutParse.getTime() - timeInParse.getTime()) / 3600000).toFixed(2);
@@ -234,7 +250,7 @@ const TIMEOUT = async (req, res) =>{
         const totalHoursOfLate = isNaN(hoursLate) || hoursLate < .5 ? 0 : hoursLate;
         const totalOverTime = isNaN(overTime) || overTime < .5 ? 0 : overTime;
 
-        let weeklySalary = (checkIfTimeInExist.crewId.hourlyRate * 8) + (checkIfTimeInExist.crewId.hourlyRate * (totalOverTime - totalHoursOfLate))
+        let weeklySalary = (findCrew.hourlyRate * 8) + (findCrew.hourlyRate * (totalOverTime - totalHoursOfLate))
         
         let remarks = 'Absent'
         if(hoursOfWork > 4){
