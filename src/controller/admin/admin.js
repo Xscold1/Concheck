@@ -313,7 +313,8 @@ const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
     try {
         const {userId} = req.params
         const {password} = req.body;
-        const updateAdminAccount = await User.findOneAndUpdate({userId:userId}, {password: password})
+        const hashPassword = bcrypt.hashSync(password, saltRounds)
+        const updateAdminAccount = await User.findOneAndUpdate({userId:userId}, {password: hashPassword})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find and update admin account");
