@@ -205,22 +205,42 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             address: req.body.address
         }
 
-        const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
-        const findEngineerAccount = await Engineer.findOne({engineerId: engineerId})
-        
-        if(!req.file){
-            const updateEngineerUserAccount = await User.findOneAndUpdate({userId: findEngineerAccount.userId}, [{
-                $set:{ 
-                    password: hashPassword
-                }}], {session})
-                .catch((error) =>{
-                    console.error(error);
-                    throw new Error("Failed to find engineer account");
-                })
+        let hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
 
+        console.log(hashPassword)
+        const findEngineerAccount = await Engineer.findOne({engineerId: engineerId})
+        .catch((error)=>{
+            console.error(error)
+            throw new Error("An error occurred while trying to find Engineer account")
+        })
+        
+        if(!findEngineerAccount || findEngineerAccount  === undefined || findEngineerAccount === null){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Engineer account not found"
+                }
+            })
+        }
+
+        if(!req.file){
             const updateEngineerAccount = await Engineer.findOneAndUpdate({engineerId:engineerId}, [{$set:{
-                ...engineerAccountInput
-            } }], {session})
+                firstName: engineerAccountInput.firstName,
+                lastName: engineerAccountInput.lastName,
+                licenseNumber: engineerAccountInput.licenseNumber,
+                address: engineerAccountInput.address
+            }}], {session})
+            .catch((error) =>{
+                console.error(error);
+                throw new Error("Failed to find engineer account");
+            })
+    
+            const updateEngineerUserAccount = await User.findOneAndUpdate({engineerId:engineerId}, [{$set:{password:hashPassword}}], {session})
+            .catch((error) =>{
+                console.error(error);
+                throw new Error("Failed to find engineer account");
+            })
 
             await session.commitTransaction();
             return res.send({
@@ -231,19 +251,24 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
                 }
             })
         }
-        
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
-            await Engineer.findOneAndUpdate({
-                engineerId: engineerId
-                },[{$set: {
-                    ...engineerAccountInput,
-                    imageUrl: uploadImage.url
-                }}], {session})
-            .catch((error) =>{
-                console.error(error);
-                throw new Error("Failed to find engineer account");
+        const updateEngineerAccount = await Engineer.findOneAndUpdate({engineerId:engineerId}, [{$set:{
+            firstName: engineerAccountInput.firstName,
+            lastName: engineerAccountInput.lastName,
+            licenseNumber: engineerAccountInput.licenseNumber,
+            address: engineerAccountInput.address
+        }}], {session})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("Failed to find engineer account");
         })
 
+        const updateEngineerUserAccount = await User.findOneAndUpdate({engineerId:engineerId}, [{$set:{password:hashPassword}}], {session})
+        .catch((error) =>{
+            console.error(error);
+            throw new Error("Failed to find engineer account");
+        })
+        
         res.send({
             status:"SUCCESS",
             statusCode:200,

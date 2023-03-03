@@ -92,7 +92,7 @@ const LOGIN = async (req, res) => {
             })
 
         }else if (checkEmail.roleId === "4" || checkEmail.roleId === 4){
-            const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  })
+            const fetchCrewInfo = await Crew.findOne({userId: checkEmail.userId  })
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Error in Fiding Dtr Record");
