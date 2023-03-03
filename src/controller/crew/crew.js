@@ -33,7 +33,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             password: req.body.password,
         }
         const hashPassword = bcrypt.hashSync(userAccountDetails.password, saltRounds)
-        const findCrew = await findOne({crewId: crewId})
+        const findCrew = await Crew.findOne({crewId: crewId})
 
         if(!findCrew || findCrew === undefined || findCrew === null) {
             return res.send({
@@ -64,7 +64,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             const updateCrewAccountDetails = await Crew.findOneAndUpdate({crewId: crewId}, {$set:{
                 ...crewInputInfo,
             }
-            }).populate('userId')
+            })
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Failed To Update Account Details");
@@ -83,7 +83,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 ...crewInputInfo,
                 imageUrl: uploadImage.url
             }
-        }).populate('userId')
+        })
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed To Update Account Details");
@@ -322,7 +322,7 @@ const GET_CREW_BY_ID = async (req, res) => {
     try {
         const {crewId} = req.params
 
-        const fetchCrewDetails = await Crew.findById(crewId)
+        const fetchCrewDetails = await Crew.findOne({crewId: crewId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find crew account details");
