@@ -62,10 +62,11 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 }
             })
         }
+
         if(!req.file){
             const updateCrewAccountDetails = await Crew.findOneAndUpdate({crewId: crewId}, {$set:{
                 ...crewInputInfo,
-            }
+                }
             })
             .catch((error) =>{
                 console.error(error);

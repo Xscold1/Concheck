@@ -236,11 +236,13 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
                 throw new Error("Failed to find engineer account");
             })
     
-            const updateEngineerUserAccount = await User.findOneAndUpdate({userId:findEngineerAccount.userId}, {password:hashPassword})
+            const updateEngineerUserAccount = await User.findOneAndUpdate({userId:findEngineerAccount.userId}, {password:hashPassword}, {session})
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Failed to find engineer account");
             })
+            
+            await session.commitTransaction();
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -261,7 +263,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             throw new Error("Failed to find engineer account");
         })
 
-        const updateEngineerUserAccount = await User.findOneAndUpdate({userId:findEngineerAccount.userId}, [{$set:{password:hashPassword}}], {session})
+        const updateEngineerUserAccount = await User.findOneAndUpdate({userId:findEngineerAccount.userId}, {password:hashPassword}, {session})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find engineer account");
