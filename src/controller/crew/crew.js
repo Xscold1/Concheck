@@ -214,7 +214,6 @@ const TIMEOUT = async (req, res) =>{
             throw new Error("An error occured while trying to find dtr");
         })
 
-        console.log(checkIfTimeInExist)
         if(!checkIfTimeInExist){
             return res.send({
                 status:"FAILED",
@@ -226,7 +225,7 @@ const TIMEOUT = async (req, res) =>{
         }
 
         //check if the crew has already time out for the day
-        if(checkIfTimeInExist.timeOut === {}){
+        if(checkIfTimeInExist.timeOut !== {} || !checkIfTimeInExist.timeOut || checkIfTimeInExist.timeOut === undefined){
             return res.send({
                 status:"FAILED",
                 statusCode:400,
