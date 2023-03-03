@@ -115,7 +115,7 @@ const LOGIN = async (req, res) => {
         res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
-            message: err.message,
+            message: "An error occurred while logging in",
         })
     }
 }
