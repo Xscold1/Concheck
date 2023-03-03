@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
 const {format, parse} = require('date-fns');
+const _ = require('lodash');
+
 
 //models
 const Crew = require('../../models/crew')
@@ -120,14 +122,12 @@ const TIMEIN = async (req, res) =>{
             "5": 'friday',
             "6": 'saturday'
         }
-            
-        
         const {crewId} = req.params
         
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
         const timeIn = format(now, 'HH:mm');
-        
+        const timeOut = format(now, 'HH:mm');
         
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
         .catch((error) =>{
@@ -208,6 +208,7 @@ const TIMEOUT = async (req, res) =>{
             })
         }
 
+        
         const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId})
         .catch((error) =>{
             console.error(error);
@@ -223,9 +224,8 @@ const TIMEOUT = async (req, res) =>{
                 }
             })
         }
-
         //check if the crew has already time out for the day
-        if(checkIfTimeInExist.timeOut !== {} || !checkIfTimeInExist.timeOut || checkIfTimeInExist.timeOut === undefined){
+        if(checkIfTimeInExist.timeOut !== undefined){
             return res.send({
                 status:"FAILED",
                 statusCode:400,

@@ -33,6 +33,7 @@
     "fs": "^0.0.1-security",
     "joi": "^17.7.0",
     "jsonwebtoken": "^9.0.0",
+    "loadash": "^1.0.0",
     "mongodb": "^5.0.0",
     "mongoose": "^6.9.0",
     "mongoose-sequence": "^5.3.1",

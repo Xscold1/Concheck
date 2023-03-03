@@ -9,7 +9,7 @@ const dtrSchema = new Schema({
    },
 
    timeOut:{
-      tpye:String,
+      type: String,
    },
 
    date:{
