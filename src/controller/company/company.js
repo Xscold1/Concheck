@@ -205,9 +205,9 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             address: req.body.address
         }
 
-        let hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
+        const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
 
-        console.log(hashPassword)
+        
         const findEngineerAccount = await Engineer.findOne({engineerId: engineerId})
         .catch((error)=>{
             console.error(error)
@@ -236,12 +236,12 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
                 throw new Error("Failed to find engineer account");
             })
     
-            const updateEngineerUserAccount = await User.findOneAndUpdate({engineerId:engineerId}, [{$set:{password:hashPassword}}], {session})
+            const updateEngineerUserAccount = await User.findOneAndUpdate({userId:findEngineerAccount.userId}, {password:hashPassword}, {session})
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Failed to find engineer account");
             })
-
+            
             await session.commitTransaction();
             return res.send({
                 status:"SUCCESS",
@@ -263,7 +263,7 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             throw new Error("Failed to find engineer account");
         })
 
-        const updateEngineerUserAccount = await User.findOneAndUpdate({engineerId:engineerId}, [{$set:{password:hashPassword}}], {session})
+        const updateEngineerUserAccount = await User.findOneAndUpdate({userId:findEngineerAccount.userId}, {password:hashPassword}, {session})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find engineer account");

@@ -47,7 +47,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             })
         }
 
-        const updatePassword = await User.findOneAndUpdate(findCrew.userId,{password:hashPassword})
+        const updatePassword = await User.findOneAndUpdate({userId:findCrew.userId},{password:hashPassword})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed To Update Account Details");
@@ -62,10 +62,11 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 }
             })
         }
+
         if(!req.file){
             const updateCrewAccountDetails = await Crew.findOneAndUpdate({crewId: crewId}, {$set:{
                 ...crewInputInfo,
-            }
+                }
             })
             .catch((error) =>{
                 console.error(error);
