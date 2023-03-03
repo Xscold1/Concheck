@@ -711,7 +711,8 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
         const date = format(now, 'yyyy-MM-dd');
         const timeIn = format(now, 'HH:mm:ss');
         // Get all the CSV data from the database
-        const csvData = await Csv.find({projectId: projectId}).populate('projectId')
+        const findProject = await Project.findOne({projectId:projectId})
+        const csvData = await Csv.find({projectId: projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching csv data from the database");
@@ -737,7 +738,7 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
 
         // Create the CSV writer with the defined headers
         const csvWriter = createCsvWriter({
-            path: path.join(DOWNLOAD_DIR, `${date}-crewRecord.csv - ${csvData.projectId.projectName}`),
+            path: path.join(DOWNLOAD_DIR, `${date}-crewRecord - ${findProject.projectName}.csv`),
             header: csvHeaders
         });
 

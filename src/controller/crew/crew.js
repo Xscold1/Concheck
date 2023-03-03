@@ -151,7 +151,7 @@ const TIMEIN = async (req, res) =>{
             timeIn: timeIn,
             date: date,
             crewId: crewId,
-            projectId: crewId.projectId,
+            projectId: findCrew.projectId,
             dayToday: daysInWeek[now.getDay()]
         })
 
@@ -214,6 +214,7 @@ const TIMEOUT = async (req, res) =>{
             throw new Error("An error occured while trying to find dtr");
         })
 
+        console.log(checkIfTimeInExist)
         if(!checkIfTimeInExist){
             return res.send({
                 status:"FAILED",
