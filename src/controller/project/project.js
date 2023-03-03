@@ -291,7 +291,7 @@ const GET_PROJECT_BY_ID = async (req, res) => {
     try {
         const {projectId} = req.params
 
-        const fetchProjectDetails = await Project.findById(projectId)
+        const fetchProjectDetails = await Project.findOne({projectId: projectId})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while fetching project");
@@ -565,7 +565,7 @@ const EDIT_TASK = async (req, res) => {
         const {taskId} = req.params
         const {taskName, startDate, endDate} = req.body
 
-        const findTask = await Task.findByIdAndUpdate({taskId: taskId},{$set:{taskName:taskName, startDate:startDate, endDate:endDate}})
+        const findTask = await Task.findOneAndUpdate({taskId: taskId},{$set:{taskName:taskName, startDate:startDate, endDate:endDate}})
         .catch((error) =>{
             console.error(error);
             throw new Error("An error occurred while updating task");

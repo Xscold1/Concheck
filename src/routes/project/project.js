@@ -5,7 +5,7 @@ const upload = require('../../middleware/upload');
 const auth = require('../../middleware/auth');
 
 router.post('/add-crew-account/:projectId', auth,projectController.ADD_CREW_ACCOUNT)
-router.post('/add-task',auth, projectController.ADD_TASK)
+router.post('/add-task/:projectId',auth, projectController.ADD_TASK)
 router.post('/add-daily-report/:projectId', auth,projectController.ADD_DAILY_REPORT)
 router.post('/upload-image/:projectId', auth , upload.array('imageUrl'),projectController.UPLOAD_IMAGE)
 router.get('/get-project-by-id/:projectId', auth,projectController.GET_PROJECT_BY_ID)
@@ -21,8 +21,8 @@ router.put('/edit-task/:taskId', auth,projectController.EDIT_TASK)
 router.put('/edit-daily-report/:dailyReportId', auth,projectController.EDIT_DAILY_REPORT)
 router.put('/edit-image/:imageId', auth,projectController.EDIT_IMAGE)
 router.delete('/delete-task/:taskId' , auth, projectController.DELETE_TASK)
-router.delete('/delete-daily-report/:dailyReport' , auth, projectController.DELETE_DAILY_REPORT)
+router.delete('/delete-daily-report/:dailyReportId' , auth, projectController.DELETE_DAILY_REPORT)
 router.delete('/delete-crew/:crewId' , auth, projectController.DELETE_CREW)
-router.delete('/delete-image-by-id/:taskId' , auth, projectController.DELETE_IMAGE_BY_ID)
+router.delete('/delete-image-by-id/:imageId' , auth, projectController.DELETE_IMAGE_BY_ID)
 
 module.exports = router

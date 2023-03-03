@@ -312,8 +312,8 @@ const GET_ALL_COMPANY_ACCOUNT = async (req,res) => {
 const EDIT_ADMIN_ACCOUNT = async (req, res) =>{
     try {
         const {userId} = req.params
-        const {email, password} = req.body;
-        const updateAdminAccount = await User.findOneAndUpdate({userId:userId}, {email: email, password: password})
+        const {password} = req.body;
+        const updateAdminAccount = await User.findOneAndUpdate({userId:userId}, {password: password})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to find and update admin account");
@@ -410,64 +410,6 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
             console.error(error)
             throw new Error("Failed to update company account");
         })
-
-        
-        
-
-        // if(!req.file){
-        //     const updateCompanyAccount = await Company.findOneAndUpdate({companyId:findCompany.companyId},[{
-        //         $set: {
-        //             companyName: registerCompany.companyName,
-        //             address: registerCompany.address,
-        //             contactNumber: registerCompany.contactNumber
-        //         }}], {session})
-        //     .catch((error) =>{
-        //         throw new Error("Failed to update company account");
-        //     })
-            
-        //     console.log(updateCompanyAccount, "updateCompanyAccount")
-
-        //     const updateCompanyUserAccount = await User.findOneAndUpdate({userId: findCompany.companyId}, [{
-        //         $set:{
-        //         password: hashPassword,
-        //     }}], {session})
-        //     .catch((error) =>{
-        //         console.error(error)
-        //         throw new Error("Failed to update company account");
-        //     })
-            
-        //     console.log("updateCompanyUserAccount", updateCompanyUserAccount)
-
-        //     return res.send({
-        //         status:"SUCCESS",
-        //         statusCode:200,
-        //         response:{
-        //             message:"Account Updated Successfully"
-        //         }
-        //     })
-        // }
-        
-        // //run this code if user upload new picture
-        // const uploadImage = await cloudinary.uploader.upload(req.file.path)
-        // const updateCompanyAccount = await Company.findOneAndUpdate({companyId: findCompany.companyId},[{
-        //     $set: {
-        //         companyName: registerCompany.companyName,
-        //         address: registerCompany.address,
-        //         contactNumber: registerCompany.contactNumber,
-        //         imageUrl: uploadImage.url,
-        //     }}], {session})
-        // .catch((error) =>{
-        //     throw new Error("Failed to update company account");
-        // })
-
-        // const updateCompanyUserAccount = await User.findOneAndUpdate({userId: findCompany.companyId}, [{$set: {
-        //     password: hashPassword,
-        // }}], {session})
-        // .catch((error) =>{
-        //     console.error(error)
-        //     throw new Error("Failed to update company account");
-        // })
-
 
         //run this user if does not upload new picture
         
