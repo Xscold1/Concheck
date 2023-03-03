@@ -471,10 +471,11 @@ const GET_DAILY_REPORT_BY_DATE = async (req, res) => {
 
         const findDailyReport = await dailyReport.findOne({projectId: projectId, date: date})
         .catch((error) => {
+            console.error(error)
             throw new Error ("An error occurred while fetching daily reports")
         })
 
-
+        
         if(!findDailyReport || findDailyReport === undefined || findDailyReport === null) {
             return res.send({
                 status:"FAILED",
@@ -492,6 +493,7 @@ const GET_DAILY_REPORT_BY_DATE = async (req, res) => {
                 data:findDailyReport,
             }
         })
+        
     } catch (error) {
         console.error(error)
         res.send({
