@@ -22,8 +22,8 @@ router.put('/edit-task/:taskId', auth,projectController.EDIT_TASK)
 router.put('/edit-daily-report/:dailyReportId', auth,projectController.EDIT_DAILY_REPORT)
 router.put('/edit-image/:imageId', auth,projectController.EDIT_IMAGE)
 router.delete('/delete-task/:taskId' , auth, projectController.DELETE_TASK)
-router.delete('/delete-daily-report/:dailyReport' , auth, projectController.DELETE_DAILY_REPORT)
+router.delete('/delete-daily-report/:dailyReportId' , auth, projectController.DELETE_DAILY_REPORT)
 router.delete('/delete-crew/:crewId' , auth, projectController.DELETE_CREW)
-router.delete('/delete-image-by-id/:taskId' , auth, projectController.DELETE_IMAGE_BY_ID)
+router.delete('/delete-image-by-id/:imageId' , auth, projectController.DELETE_IMAGE_BY_ID)
 
 module.exports = router

@@ -19,7 +19,7 @@ const LOGIN = async (req, res) => {
         const checkEmail = await User.findOne({email: email})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed to create Crew account");
+            throw new Error("No account found.");
         })
 
         if (!checkEmail){
@@ -32,7 +32,7 @@ const LOGIN = async (req, res) => {
             })
         }
         const checkPassword = bcrypt.compareSync(password, checkEmail.password)
-
+        
         if(!checkPassword){
             return res.send({
                 status:"ERROR",
@@ -58,7 +58,7 @@ const LOGIN = async (req, res) => {
 
         }else if(checkEmail.roleId === "2" ||  checkEmail.roleId === 2){
 
-            const fetchCompanyInfo = await Company.findOne({userId:checkEmail._id }).populate('userId')
+            const fetchCompanyInfo = await Company.findOne({userId:checkEmail.userId })
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Error in Fiding Dtr Record");
@@ -75,12 +75,13 @@ const LOGIN = async (req, res) => {
             })
 
         }else if(checkEmail.roleId === "3" || checkEmail.roleId === 3){
-            const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail._id  }).populate('userId')
+            const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail.userId })
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Error in Fiding Dtr Record");
             })
-            const token = tokenization.generateToken({ id: fetchEngineerInfo.EngineerId, roleId:checkEmail.roleId})
+            
+            const token = tokenization.generateToken({ id: fetchEngineerInfo.engineerId, roleId:checkEmail.roleId})
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -91,7 +92,7 @@ const LOGIN = async (req, res) => {
             })
 
         }else if (checkEmail.roleId === "4" || checkEmail.roleId === 4){
-            const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  }).populate('userId')
+            const fetchCrewInfo = await Crew.findOne({userId:checkEmail._id  })
             .catch((error) =>{
                 console.error(error);
                 throw new Error("Error in Fiding Dtr Record");
