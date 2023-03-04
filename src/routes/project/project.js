@@ -10,7 +10,7 @@ router.post('/add-daily-report/:projectId', auth,projectController.ADD_DAILY_REP
 router.post('/upload-image/:projectId', auth , upload.array('imageUrl'),projectController.UPLOAD_IMAGE)
 router.get('/get-project-by-id/:projectId', auth,projectController.GET_PROJECT_BY_ID)
 router.get('/get-all-crew-by-project/:projectId', auth,projectController.GET_ALL_CREW_BY_PROJECT)
-router.get('/get-daily-report-by-id/:projectId', auth,projectController.GET_DAILY_REPORT_BY_ID)
+router.get('/get-daily-report-by-id/:dailyReportId', auth,projectController.GET_DAILY_REPORT_BY_ID)
 router.get('/get-all-task/:projectId', auth,projectController.GET_ALL_TASK)
 router.get('/get-task-by-id/:taskId', auth,projectController.GET_TASK_BY_ID)
 router.get('/get-all-daily-report-by-project/:projectId', auth,projectController.GET_ALL_DAILY_REPORT_BY_PROJECT)

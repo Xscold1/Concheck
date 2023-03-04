@@ -667,7 +667,7 @@ const EDIT_DAILY_REPORT = async (req, res) => {
     try {
         const {dailyReportId} = req.params
         const {remarks, weatherReport, causeOfDelay, hoursDelay} = req.body
-        const updateDailyReport = await DailyReport.findByIdAndUpdate(dailyReportId,
+        const updateDailyReport = await DailyReport.findOneAndUpdate({dailyReportId: dailyReportId},
             {$set:{
                 remarks:remarks,
                 weatherReport:weatherReport, 

@@ -42,7 +42,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 status: "FAILED",
                 statusCode:400,
                 response:{
-                    messsage: "Crew does not exist"
+                    message: "Crew does not exist"
                 }
             })
         }
@@ -58,7 +58,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 status: "FAILED",
                 statusCode:400,
                 response:{
-                    messsage: "Failed to update user Account Details"
+                    message: "Failed to update user Account Details"
                 }
             })
         }
@@ -97,7 +97,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             status: "Success",
             statusCode:200,
             response:{
-                messsage: "Successfully Updated Account Details"
+                message: "Successfully Updated Account Details"
             }
         })
     } catch (error) {
@@ -106,7 +106,7 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: "Failed To Update Account Details"
+                message: "Failed To Update Account Details"
             }
         })
     }
