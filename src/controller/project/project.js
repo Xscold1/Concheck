@@ -66,7 +66,7 @@ const ADD_DAILY_REPORT = async (req,res)=>{
         const {remarks, weatherReport, causeOfDelay, hoursDelay} = req.body
 
         const now = new Date();
-        const date = format(now, 'yyyy-MM-dd');
+        const date = format(now, 'MM-dd-yyyy');
 
         const insertDailyReport = await DailyReport.create({
             remarks:remarks,
