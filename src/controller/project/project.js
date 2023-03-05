@@ -768,7 +768,7 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
 
 
         if(!csvData || csvData.length === 0) {
-            throw new Error ("No csv record yet")
+            return res.json({status: 'FAILED', statusCode: 400, message: "No Csv Data Available"});
         }
 
         // Define the headers for the CSV file
@@ -812,7 +812,7 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: "An error occurred while downloading csv"
+                message: "An error occurred while downloading csv"
             }
         })
     }
