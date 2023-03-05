@@ -260,7 +260,9 @@ const TIMEOUT = async (req, res) =>{
         const totalHoursOfLate = isNaN(hoursLate) || hoursLate < .5 ? 0 : hoursLate;
         const totalOverTime = isNaN(overTime) || overTime < .5 ? 0 : overTime;
 
-        let weeklySalary = ((findCrew.hourlyRate * 8) + ((findCrew.hourlyRate *(totalHoursOfLate - totalHoursOfLate))))
+        let lateComputation = ((findCrew.dailyRate) - (findCrew.hourlyRate * totalHoursOfLate))
+        let overTimeComputation = ((findCrew.dailyRate) + (findCrew.hourlyRate * totalOverTime))
+        let weeklySalary = lateComputation + overTimeComputation
 
         
         let remarks = 'Absent'
