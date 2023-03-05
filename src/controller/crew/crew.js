@@ -250,7 +250,9 @@ const TIMEOUT = async (req, res) =>{
         //if totalHours and total Late is less than 30 mins then it will not be counted as late
         const totalHoursOfLate = isNaN(hoursLate) || hoursLate < .5 ? 0 : hoursLate;
         const totalOverTime = isNaN(overTime) || overTime < .5 ? 0 : overTime;
-
+        console.log(findCrew.hourlyRate)
+        console.log(totalHoursOfLate)
+        console.log(totalOverTime)
         let weeklySalary = (findCrew.hourlyRate * 8) + (findCrew.hourlyRate * (totalOverTime - totalHoursOfLate))
         
         let remarks = 'Absent'
@@ -276,7 +278,7 @@ const TIMEOUT = async (req, res) =>{
         if (!csvRecord) {
             // If the CSV record doesn't exist, create a new one
             const newCsvRecord = new Csv({
-                Name:"vash",
+                Name:findCrew.firstName + '' + findCrew.lastName,
                 crewId:crewId,
                 projectId: checkIfTimeInExist.projectId,
                 [checkIfTimeInExist.dayToday]: remarks,

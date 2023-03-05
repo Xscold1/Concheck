@@ -782,6 +782,7 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
             { id: 'totalHoursWork', title: 'Total Hours Worked' },
             { id: 'totalOverTimeHours', title: 'Total Overtime Hours' },
             { id: 'totalLateHours', title: 'Total Late Hours' },
+            { id: 'weeklySalary', title: 'Weekly Salary' },
         ];
 
         // Create the CSV writer with the defined headers
