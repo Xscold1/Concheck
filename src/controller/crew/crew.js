@@ -129,7 +129,12 @@ const TIMEIN = async (req, res) =>{
         const date = format(now, 'yyyy-MM-dd');
         const timeIn = format(now, 'HH:mm');
         const timeOut = format(now, 'HH:mm');
+
         
+        if(now.getDay() === 0 || now.getDay() === 6){
+            return res.json({status: 'FAILED', statusCode: 400, message: "You cannot time in time out on saturday and sunday"});
+        }
+
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
         .catch((error) =>{
             console.error(error);
@@ -137,6 +142,10 @@ const TIMEIN = async (req, res) =>{
         })
 
         const findCrew = await Crew.findOne({crewId: crewId})
+
+        if(!findCrew || findCrew === undefined || findCrew===null){
+            return res.json({status: 'FAILED', statusCode: 400, message: "Crew does not exist"});
+        }
 
         if(existingDtr){
             return res.send({
@@ -250,10 +259,9 @@ const TIMEOUT = async (req, res) =>{
         //if totalHours and total Late is less than 30 mins then it will not be counted as late
         const totalHoursOfLate = isNaN(hoursLate) || hoursLate < .5 ? 0 : hoursLate;
         const totalOverTime = isNaN(overTime) || overTime < .5 ? 0 : overTime;
-        console.log(findCrew.hourlyRate)
-        console.log(totalHoursOfLate)
-        console.log(totalOverTime)
-        let weeklySalary = (findCrew.hourlyRate * 8) + (findCrew.hourlyRate * (totalOverTime - totalHoursOfLate))
+
+        let weeklySalary = ((findCrew.hourlyRate * 8) + ((findCrew.hourlyRate *(totalHoursOfLate - totalHoursOfLate))))
+
         
         let remarks = 'Absent'
         if(hoursOfWork > 4){
@@ -289,7 +297,7 @@ const TIMEOUT = async (req, res) =>{
         } else {
             //update the database if the user is already on the csv record
             const updateCsvRecord = await Csv.updateOne({crewId: crewId}, {$set:{
-                [checkIfTimeInExist.dayToday]: hoursOfWork > 4 ?  1 : 0.5,
+                [checkIfTimeInExist.dayToday]: remarks,
                 totalHoursWork: csvRecord.totalHoursWork ? csvRecord.totalHoursWork + parseInt(hoursOfWork) : parseInt(hoursOfWork),
                 totalOverTimeHours:csvRecord.totalOverTimeHours ? csvRecord.totalOverTimeHours + parseInt(totalOverTime) : parseInt(totalOverTime),
                 totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + parseInt(totalHoursOfLate) : parseInt(totalHoursOfLate),
