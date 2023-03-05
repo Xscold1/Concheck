@@ -262,7 +262,7 @@ const TIMEOUT = async (req, res) =>{
 
         let lateComputation = ((findCrew.dailyRate) - (findCrew.hourlyRate * totalHoursOfLate))
         let overTimeComputation = ((findCrew.dailyRate) + (findCrew.hourlyRate * totalOverTime))
-        let weeklySalary = lateComputation + overTimeComputation
+        let weeklySalary = ((findCrew.dailyRate ) - (Math.abs(lateComputation) + Math.abs(overTimeComputation)))
 
         
         let remarks = 'Absent'
