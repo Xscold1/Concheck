@@ -469,12 +469,15 @@ const GET_DAILY_REPORT_BY_DATE = async (req, res) => {
     try {
         const {date, projectId} = req.params
 
+        console.log(date)
+
         const findDailyReport = await dailyReport.findOne({projectId: projectId, date: date})
         .catch((error) => {
             console.error(error)
             throw new Error ("An error occurred while fetching daily reports")
         })
 
+        
         
         if(!findDailyReport || findDailyReport === undefined || findDailyReport === null) {
             return res.send({
@@ -765,7 +768,7 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
 
 
         if(!csvData || csvData.length === 0) {
-            throw Error ("No csv record yet")
+            throw new Error ("No csv record yet")
         }
 
         // Define the headers for the CSV file
