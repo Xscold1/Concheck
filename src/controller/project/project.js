@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-const {format, parse} = require('date-fns');
+const {format, parse, parseISO} = require('date-fns');
 const path = require('path');
 const os = require('os');
 
@@ -29,7 +29,32 @@ const ADD_TASK = async (req, res) => {
         const {projectId} = req.params
         
         const {taskName,startDate, endDate} = req.body;
-        
+
+        const findProject = await Project.findOne({projectId: projectId})
+        .catch((error)=>{
+            throw new Error("An error occurred while searching for project ");
+        })
+
+        console.log(findProject.startDate.toISOString().split("T")[0])
+
+        if(startDate < findProject.startDate.toISOString().split("T")[0]){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Cannot add task that is less than startDate of the project"
+                }
+            })
+        }else if(endDate > findProject.endDate.toISOString().split("T")[0]){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Cannot add task that is greater than endDate of the project"
+                }
+            })
+        }
+
         const addTask = await Task.create({
             taskName:taskName,
             startDate:startDate,
@@ -42,11 +67,11 @@ const ADD_TASK = async (req, res) => {
 
         res.send({
             status:"SUCCESS",
-                statusCode:200,
-                response:{
-                    message:"Task added successfully"
-                }
-            })
+            statusCode:200,
+            response:{
+                message:"Task added successfully"
+            }
+        })
 
     } catch (error) {
         console.error(error);

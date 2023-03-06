@@ -33,6 +33,16 @@ const csvSchema = new Schema({
         default:""
     },
 
+    saturday:{
+        type:String,
+        default:""
+    },
+
+    sunday:{
+        type:String,
+        default:""
+    },
+
     totalHoursWork:{
         type:Number,
         default:0

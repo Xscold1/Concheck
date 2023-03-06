@@ -131,9 +131,9 @@ const TIMEIN = async (req, res) =>{
         const timeOut = format(now, 'HH:mm');
 
         
-        if(now.getDay() === 0 || now.getDay() === 6){
-            return res.json({status: 'FAILED', statusCode: 400, message: "You cannot time in time out on saturday and sunday"});
-        }
+        // if(now.getDay() === 0 || now.getDay() === 6){
+        //     return res.json({status: 'FAILED', statusCode: 400, message: "You cannot time in time out on saturday and sunday"});
+        // }
 
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
         .catch((error) =>{
@@ -194,6 +194,17 @@ const TIMEIN = async (req, res) =>{
 const TIMEOUT = async (req, res) =>{
     try {
         const {crewId} = req.params
+
+
+        const daysInWeek = {
+            "0": 'sunday',
+            "1": 'monday',
+            "2": 'tuesday',
+            "3": 'wednesday',
+            "4": 'thursday',
+            "5": 'friday',
+            "6": 'saturday'
+        }
 
         //date formats
         const now = new Date();
@@ -265,12 +276,22 @@ const TIMEOUT = async (req, res) =>{
         let weeklySalary = ((findCrew.dailyRate ) - (Math.abs(lateComputation) + Math.abs(overTimeComputation)))
 
         
+        if(daysInWeek[now.getDay()] === 'saturday' || daysInWeek[now.getDay()] === 'sunday'){
+            let remarks = ""
+            if(hoursOfWork > 4){
+                remarks = 'Present'
+            }else if (hoursOfWork <= 4){
+                remarks = 'halfDay'
+            } 
+        }
+
         let remarks = 'Absent'
         if(hoursOfWork > 4){
             remarks = 'Present'
         }else if (hoursOfWork <= 4){
             remarks = 'halfDay'
         }
+        
         //update the dtr of crew
         const updateDtr = await Dtr.updateOne({crewId: crewId},{$set: {timeOut: timeOut,}})
         .catch((error) =>{
