@@ -101,9 +101,7 @@ const GET_ALL_PROJECT = async (req, res) => {
             throw new Error("Failed to to find project");
         })
 
-        
-
-        if(!fetchAllProject){
+        if(fetchAllProject.length === 0 || fetchAllProject === undefined || fetchAllProject === null){
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -112,7 +110,6 @@ const GET_ALL_PROJECT = async (req, res) => {
                 }
             })
         }
-        
         res.send({
             status:"SUCCESS",
             statusCode:200,
