@@ -35,8 +35,6 @@ const ADD_TASK = async (req, res) => {
             throw new Error("An error occurred while searching for project ");
         })
 
-        console.log(findProject.startDate.toISOString().split("T")[0])
-
         if(startDate < findProject.startDate.toISOString().split("T")[0]){
             return res.send({
                 status:"FAILED",
@@ -824,7 +822,7 @@ const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
         })
 
         return res.send({
-            status: 'OK',
+            status: 'SUCCESS',
             statusCode: 200,
             response: {
                 message: 'CSV file written successfully'

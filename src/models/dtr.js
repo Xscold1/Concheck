@@ -26,7 +26,6 @@ const dtrSchema = new Schema({
   },
   crewId:{
       type:Number,
-      ref: 'crew',
   }
 
 })
