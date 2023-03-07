@@ -4,6 +4,7 @@ const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
 const {format, parse} = require('date-fns');
 const _ = require('lodash');
+const { parseFromTimeZone, formatToTimeZone } = require('date-fns-timezone')
 
 
 //models
@@ -126,14 +127,11 @@ const TIMEIN = async (req, res) =>{
         const {crewId} = req.params
         
         const now = new Date();
-        const date = format(now, 'yyyy-MM-dd');
-        const timeIn = format(now, 'HH:mm');
-        const timeOut = format(now, 'HH:mm');
 
+        const date = format(now, 'yyyy-MM-dd');
+        const timezone = parseFromTimeZone(now, { timeZone: 'Singapore' })
         
-        // if(now.getDay() === 0 || now.getDay() === 6){
-        //     return res.json({status: 'FAILED', statusCode: 400, message: "You cannot time in time out on saturday and sunday"});
-        // }
+        const timeIn = format(timezone, 'HH:mm');
 
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
         .catch((error) =>{
@@ -156,9 +154,11 @@ const TIMEIN = async (req, res) =>{
                 }
             })
         }
+
+        
         
         const newCrewTimeIn = new Dtr({
-            timeIn: timeIn,
+            timeIn: timeIn + 4,
             date: date,
             crewId: crewId,
             projectId: findCrew.projectId,
@@ -209,7 +209,10 @@ const TIMEOUT = async (req, res) =>{
         //date formats
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
-        const timeOut = format(now, 'HH:mm');
+
+        const timezone = parseFromTimeZone(now, { timeZone: 'Singapore' })
+        
+        const timeOut = format(timezone, 'HH:mm');
         const timeFormat = 'HH:mm';
 
         //update Dtr to accept Timeout and be use
