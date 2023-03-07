@@ -125,12 +125,20 @@ const TIMEIN = async (req, res) =>{
             "6": 'saturday'
         }
         const {crewId} = req.params
+
+        function addHours(date, hours) {
+            date.setHours(date.getHours() + hours);
+          
+            return date;
+          }
         
         const now = new Date();
 
         const date = format(now, 'yyyy-MM-dd');
+
+        const newDate = addHours(now, 5);
         
-        const timeIn = format(now, 'HH:mm');
+        const timeIn = format(newDate, 'HH:mm');
 
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
         .catch((error) =>{
@@ -153,11 +161,9 @@ const TIMEIN = async (req, res) =>{
                 }
             })
         }
-
-        
         
         const newCrewTimeIn = new Dtr({
-            timeIn: timeIn + 4,
+            timeIn: timeIn,
             date: date,
             crewId: crewId,
             projectId: findCrew.projectId,
@@ -205,11 +211,21 @@ const TIMEOUT = async (req, res) =>{
             "6": 'saturday'
         }
 
+
+
         //date formats
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
 
-        const timeOut = format(now, 'HH:mm');
+        function addHours(date, hours) {
+            date.setHours(date.getHours() + hours);
+          
+            return date;
+          }
+
+          const newDate = addHours(now, 5);
+
+        const timeOut = format(newDate, 'HH:mm');
         const timeFormat = 'HH:mm';
 
         //update Dtr to accept Timeout and be use
