@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
-const {format, parse} = require('date-fns');
+const {format, parse, differenceInHours, differenceInMinutes} = require('date-fns');
 const _ = require('lodash');
 const { parseFromTimeZone, formatToTimeZone } = require('date-fns-timezone')
 
@@ -200,7 +200,6 @@ const TIMEOUT = async (req, res) =>{
     try {
         const {crewId} = req.params
 
-
         const daysInWeek = {
             "0": 'sunday',
             "1": 'monday',
@@ -210,22 +209,18 @@ const TIMEOUT = async (req, res) =>{
             "5": 'friday',
             "6": 'saturday'
         }
-
-
-
         //date formats
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
-
         function addHours(date, hours) {
             date.setHours(date.getHours() + hours);
           
             return date;
           }
+        const newDate = addHours(now, 8);
 
-          const newDate = addHours(now, 8);
-
-        const timeOut = format(newDate, 'HH:mm');
+        // const timeOut = format(newDate, 'HH:mm');
+        const timeOut = "16:30"
         const timeFormat = 'HH:mm';
 
         //update Dtr to accept Timeout and be use
@@ -244,8 +239,6 @@ const TIMEOUT = async (req, res) =>{
                 }
             })
         }
-
-
         
         const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId})
         .catch((error) =>{
@@ -279,70 +272,66 @@ const TIMEOUT = async (req, res) =>{
         const startShiftParse = parse(findCrew.startShift, timeFormat, new Date());
         const endShiftParse = parse(findCrew.endShift, timeFormat, new Date());
 
-        //actual computation
-        let hoursOfWork = ((timeOutParse.getTime() - timeInParse.getTime()) / 3600000).toFixed(2);
+        let isLate = false;
+        let isUnderpay = false;
+        let isOverTime = false;
 
+        //check if crew is late
+        if (timeInParse > startShiftParse) {
+            isLate = true;
+        }
+
+        //check if crew is underpaid
+        if (timeOutParse < endShiftParse) {
+            isUnderpay = true;
+        }
+
+        //check if crew has overtime
+        if (timeOutParse > endShiftParse) {
+            isOverTime = true;
+        }
+
+        //compute total hours worked
+        const hoursOfWork = (differenceInHours(timeOutParse, timeInParse) - 1);
+        
+        let weeklySalary = 0;
+        let overTimeHours = 0;
         let hoursLate = 0
-        let overTime = 0 
-        let underTime = 0
-        let lateComputation = 0
-        let overTimeComputation = 0
-        let weeklySalary = 0 
-        if(timeInParse.getTime() > startShiftParse.getTime()){
-            hoursLate = ((timeInParse.getTime() - startShiftParse.getTime()));
+        //compute weekly salary based on hourly rate or daily rate
+        if (findCrew.hourlyRate) {
+        const hourlyRate = findCrew.hourlyRate;
+        weeklySalary = hoursOfWork * hourlyRate;
+
+            //check if there is overtime
+            if (isOverTime) {
+                overTimeHours = differenceInHours(timeOutParse)
+                overTimeRate = hourlyRate * 1.5;
+                overTimePay = (overTimeHours * overTimeRate);
+                weeklySalary += overTimePay;
+            }
+                //compute late penalty
+            if (isLate) {
+                    const latePenaltyRate = hourlyRate / 2;
+                    const latePenalty = (differenceInMinutes(timeInParse, startShiftParse) * (latePenaltyRate / 60));
+                    weeklySalary -= latePenalty;
+            }
+
+                //compute underpay penalty
+            if (isUnderpay) {
+                    const underpayPenaltyRate = hourlyRate / 2;
+                    const underpayPenalty = (differenceInMinutes(endShiftParse, timeOutParse) * (underpayPenaltyRate / 60));
+                    weeklySalary -= underpayPenalty;
+            }
         }
 
-        if( timeOutParse.getTime() > endShiftParse.getTime() ){
-            overTime = ((endShiftParse.getTime() - timeOutParse.getTime()) / 3600000).toFixed(2);
-        }
-
-        if(timeOutParse.getTime() < endShiftParse.getTime() ){
-            underTime = ((endShiftParse.getTime() - timeOutParse.getTime()) /3600000 ).toFixed(2)
-        }
-
-        if(timeOutParse.getTime() < startShiftParse.getTime()){
-            hoursOfWork = 0 
-        }
-        
-        //if totalHours and total Late is less than 30 mins then it will not be counted as late
-        const totalHoursOfLate = isNaN(hoursLate) || hoursLate < .5 ? 0 : hoursLate;
-        const totalOverTime = isNaN(overTime) || overTime > .5 ? 0 : overTime;
-
-        if(totalHoursOfLate !== 0 ){
-            lateComputation = ((findCrew.dailyRate) - (findCrew.hourlyRate * totalHoursOfLate))
-        }
-
-        if(totalOverTime !== 0){
-            overTimeComputation = ((findCrew.dailyRate) + (findCrew.hourlyRate * totalOverTime))
-        }
-        
-        let lateWeeklySalary = ((findCrew.hourlyRate * lateComputation))
-        let underPayweeklySalary = ((findCrew.hourlyRate * underTime))
-        let overTimeWeeklySalary = ((findCrew.hourlyRate * overTime))
-        weeklySalary = ((findCrew.dailyRate + overTimeWeeklySalary) - (lateWeeklySalary + underPayweeklySalary))
-
-        if(daysInWeek[now.getDay()] === 'saturday' || daysInWeek[now.getDay()] === 'sunday'){
-            let remarks = ""
-            if(hoursOfWork > 4){
-                remarks = 'Present'
-            }else if (hoursOfWork <= 4){
-                remarks = 'halfDay'
-            } 
-        }
-
-        let remarks = 'Absent'
-        if(hoursOfWork > 4){
-            remarks = 'Present'
-        }else if (hoursOfWork <= 4){
-            remarks = 'halfDay'
-        }
-
-        //update the dtr of crew
-        const updateDtr = await Dtr.findOneAndUpdate({date: date, crewId: crewId}, {$set: {timeOut: timeOut}})
+        console.log(weeklySalary)
+        //update Dtr to reflect time out
+        const updateDtr = await Dtr.updateOne({date: date, crewId: crewId}, {timeOut: timeOut})
         .catch((error) =>{
             console.error(error);
-            throw new Error("Failed While updating Dtr");
+            throw new Error("An error occured while trying to update dtr");
         })
+
         //check if there is already a csv already has the crewId
         const csvRecord = await Csv.findOne({ crewId: crewId})
         .catch((error) =>{
@@ -356,44 +345,44 @@ const TIMEOUT = async (req, res) =>{
                 Name:findCrew.firstName + '' + findCrew.lastName,
                 crewId:crewId,
                 projectId: checkIfTimeInExist.projectId,
-                [checkIfTimeInExist.dayToday]: remarks,
+                [checkIfTimeInExist.dayToday]: hoursOfWork,
                 totalHoursWork:parseInt(hoursOfWork),
-                weeklySalary: weeklySalary
+                weeklySalary: weeklySalary.toFixed(2)
             });
             await newCsvRecord.save();
         } else {
             //update the database if the user is already on the csv record
             const updateCsvRecord = await Csv.updateOne({crewId: crewId}, {$set:{
-                [checkIfTimeInExist.dayToday]: remarks,
+                [checkIfTimeInExist.dayToday]: hoursOfWork,
                 totalHoursWork: csvRecord.totalHoursWork ? csvRecord.totalHoursWork + parseInt(hoursOfWork) : parseInt(hoursOfWork),
-                totalOverTimeHours:csvRecord.totalOverTimeHours ? csvRecord.totalOverTimeHours + parseInt(totalOverTime) : parseInt(totalOverTime),
-                totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + parseInt(totalHoursOfLate) : parseInt(totalHoursOfLate),
-                weeklySalary: csvRecord.weeklySalary ? csvRecord.weeklySalary + weeklySalary : weeklySalary
+                totalOverTimeHours:csvRecord.totalOverTimeHours ? csvRecord.totalOverTimeHours + overTimeHours : overTimeHours,
+                totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + hoursLate : hoursLate,
+                weeklySalary: csvRecord.weeklySalary.toFixed(2) ? csvRecord.weeklySalary.toFixed(2) + weeklySalary.toFixed(2) : weeklySalary.toFixed(2)
             }})
             .catch((error) =>{
                 console.error(error);
-                throw new Error("Failed to create Crew account");
+                throw new Error("Failed to create csv");
             })
         }
-        
-        res.send({
+    
+        return res.send({
             status:"SUCCESS",
             statusCode:200,
             response:{
-                message:"Successfully log"
+                message:"Time out successfully recorded",
             }
         })
 
     } catch (error) {
-        console.log(error)
+        console.error(error)
         return res.send({
-            status: "INTERNAL_SERVER_ERROR",
+            status:"FAILED",
             statusCode:500,
             response:{
-                messsage: "Failed to time out"
+                message:"An error occured while trying to record time out"
             }
         })
-    }
+    }           
 }
 
 const GET_CREW_BY_ID = async (req, res) => {

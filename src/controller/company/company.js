@@ -13,6 +13,7 @@ const dailyReport = require('../../models/dailyReport')
 
 //utils
 const cloudinary = require('../../utils/cloudinary')
+const {userSchema, engineerDetailsSchema} = require('../../validations/userSchema');
 
 //import
 const mongoose = require('mongoose');
@@ -36,12 +37,36 @@ const ADD_ENGINEER_ACCOUNT = async (req, res) => {
             password: req.body.password
         } 
 
+        try {
+            await userSchema.validateAsync(userAccountInput)
+        } catch (error) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:error.message
+                }
+            })
+        }
+
         const engineerAccountInput = {
             firstName: req.body.firstName,
             lastName: req.body.lastName,
             licenseNumber: req.body.licenseNumber,
             address: req.body.address
         }
+
+        const {error} = engineerDetailsSchema.validate(engineerAccountInput)
+        if(error){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:error.message
+                }
+            })
+        }
+
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const checkIfCompanyExist = await Company.findOne({companyId : companyId})
 

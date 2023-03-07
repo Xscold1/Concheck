@@ -10,7 +10,8 @@ const Engineer = require('../../models/engineer');
 const Project = require('../../models/project');
 
 //utils
-const cloudinary = require('../../utils/cloudinary')
+const cloudinary = require('../../utils/cloudinary');
+const { projectDetailsSchema } = require('../../validations/userSchema');
 
 
 const CREATE_PROJECT = async (req, res) => {
@@ -26,6 +27,17 @@ const CREATE_PROJECT = async (req, res) => {
             projectCode:req.body.projectCode,
             status:req.body.status, 
             budget:req.body.budget,
+        }
+
+        const {error} = projectDetailsSchema.validate(createProjectInfo)
+        if(error){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:error.message
+                }
+            })
         }
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)

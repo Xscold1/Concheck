@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const cloudinary = require('../../utils/cloudinary')
+const {userSchema, companyDetailsSchema} = require('../../validations/userSchema');
 
 //models 
 const User = require('../../models/user')
@@ -21,7 +22,21 @@ const saltRounds = 10
 
 const ADD_ADMIN_ACCOUNT = async (req, res) => {
     try { 
+
+        const {error} = userSchema.validate(req.body);
+
+        if(error) {
+            console.error(error)
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:error.message
+                }
+            })
+        }
         const {email, password} = req.body;
+        
         const checkAdminIfExist = await User.findOne({email: email})
         .catch((error) =>{
             console.error(error);
@@ -77,11 +92,34 @@ const ADD_COMPANY_ACCOUNT = async (req, res) => {
             email: req.body.email,
             password: req.body.password,
         }
+        
+        try {
+            await userSchema.validateAsync(registerUser)
+        } catch (error) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:error.message
+                }
+            })
+        }
 
         const registerCompany = {
             companyName: req.body.companyName,
             address: req.body.address,
             contactNumber: req.body.contactNumber
+        }
+
+        const {error} = companyDetailsSchema.validate(registerCompany);
+        if(error) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:error.message
+                }
+            })
         }
         
         const checkEmailIfExist = await User.findOne({email:registerUser.email})

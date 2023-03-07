@@ -18,7 +18,7 @@ const DailyReport = require('../../models/dailyReport');
 
 //utils
 const cloudinary = require('../../utils/cloudinary');
-const dailyReport = require('../../models/dailyReport');
+const {userSchema, crewDetailsSchema} = require('../../validations/userSchema');
 
 //global variables
 const saltRounds = 10
@@ -34,6 +34,8 @@ const ADD_TASK = async (req, res) => {
         .catch((error)=>{
             throw new Error("An error occurred while searching for project ");
         })
+
+        
 
         if(startDate < findProject.startDate.toISOString().split("T")[0]){
             return res.send({
@@ -130,6 +132,32 @@ const ADD_CREW_ACCOUNT = async (req, res) => {
         session.startTransaction()
         const timeFormat = 'HH:mm';
         const dateFormat = 'dd-MM-yyyy'
+
+        try {
+            await userSchema.validateAsync({email: req.body.email, password: req.body.password})
+        } catch (error) {
+            if(error){
+                return res.send({
+                    status:"FAILED",
+                    statusCode:400,
+                    response:{
+                        message:error.message
+                    }
+                })
+            }
+        }
+
+        const {error} = crewDetailsSchema.validate({firstName: req.body.firstName, lastName: req.body.lastName, dailyRate: req.body.dailyRate, startShift: req.body.startShift, endShift: req.body.endShift})
+        if(error){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:error.message
+                }
+            })
+        }
+
         const {email , password , startShift, endShift, dailyRate, firstName, lastName} = req.body
 
         const endShiftParse = parse(endShift, timeFormat, new Date());
