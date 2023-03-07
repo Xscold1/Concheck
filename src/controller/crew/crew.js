@@ -229,6 +229,7 @@ const TIMEOUT = async (req, res) =>{
             })
         }
 
+
         
         const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId})
         .catch((error) =>{
@@ -264,18 +265,46 @@ const TIMEOUT = async (req, res) =>{
 
         //actual computation
         let hoursOfWork = ((timeOutParse.getTime() - timeInParse.getTime()) / 3600000).toFixed(2);
-        const hoursLate = ((timeInParse.getTime() - startShiftParse.getTime()) / 3600000).toFixed(2);
-        const overTime = ((endShiftParse.getTime() - timeOutParse.getTime()) / 3600000).toFixed(2);
 
+        let hoursLate = 0
+        let overTime = 0 
+        let underTime = 0
+        let lateComputation = 0
+        let overTimeComputation = 0
+        let weeklySalary = 0 
+        if(timeInParse.getTime() > startShiftParse.getTime()){
+            hoursLate = ((timeInParse.getTime() - startShiftParse.getTime()));
+        }
+
+        if( timeOutParse.getTime() > endShiftParse.getTime() ){
+            overTime = ((endShiftParse.getTime() - timeOutParse.getTime()) / 3600000).toFixed(2);
+        }
+
+        if(timeOutParse.getTime() < endShiftParse.getTime() ){
+            underTime = ((endShiftParse.getTime() - timeOutParse.getTime()) /3600000 ).toFixed(2)
+        }
+
+        if(timeOutParse.getTime() < startShiftParse.getTime()){
+            hoursOfWork = 0 
+        }
+        
         //if totalHours and total Late is less than 30 mins then it will not be counted as late
         const totalHoursOfLate = isNaN(hoursLate) || hoursLate < .5 ? 0 : hoursLate;
-        const totalOverTime = isNaN(overTime) || overTime < .5 ? 0 : overTime;
+        const totalOverTime = isNaN(overTime) || overTime > .5 ? 0 : overTime;
 
-        let lateComputation = ((findCrew.dailyRate) - (findCrew.hourlyRate * totalHoursOfLate))
-        let overTimeComputation = ((findCrew.dailyRate) + (findCrew.hourlyRate * totalOverTime))
-        let weeklySalary = ((findCrew.dailyRate ) - (Math.abs(lateComputation) + Math.abs(overTimeComputation)))
+        if(totalHoursOfLate !== 0 ){
+            lateComputation = ((findCrew.dailyRate) - (findCrew.hourlyRate * totalHoursOfLate))
+        }
 
+        if(totalOverTime !== 0){
+            overTimeComputation = ((findCrew.dailyRate) + (findCrew.hourlyRate * totalOverTime))
+        }
         
+        let lateWeeklySalary = ((findCrew.hourlyRate * lateComputation))
+        let underPayweeklySalary = ((findCrew.hourlyRate * underTime))
+        let overTimeWeeklySalary = ((findCrew.hourlyRate * overTime))
+        weeklySalary = ((findCrew.dailyRate + overTimeWeeklySalary) - (lateWeeklySalary + underPayweeklySalary))
+
         if(daysInWeek[now.getDay()] === 'saturday' || daysInWeek[now.getDay()] === 'sunday'){
             let remarks = ""
             if(hoursOfWork > 4){
@@ -291,16 +320,15 @@ const TIMEOUT = async (req, res) =>{
         }else if (hoursOfWork <= 4){
             remarks = 'halfDay'
         }
-        
+
         //update the dtr of crew
-        const updateDtr = await Dtr.updateOne({crewId: crewId},{$set: {timeOut: timeOut,}})
+        const updateDtr = await Dtr.findOneAndUpdate({date: date, crewId: crewId}, {$set: {timeOut: timeOut}})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed While updating Dtr");
         })
-
         //check if there is already a csv already has the crewId
-        const csvRecord = await Csv.findOne({ crewId: crewId })
+        const csvRecord = await Csv.findOne({ crewId: crewId})
         .catch((error) =>{
             console.error(error);
             throw new Error("Failed to create Crew account");
