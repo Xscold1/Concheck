@@ -136,7 +136,7 @@ const TIMEIN = async (req, res) =>{
 
         const date = format(now, 'yyyy-MM-dd');
 
-        const newDate = addHours(now, 5);
+        const newDate = addHours(now, 8);
         
         const timeIn = format(newDate, 'HH:mm');
 
@@ -223,7 +223,7 @@ const TIMEOUT = async (req, res) =>{
             return date;
           }
 
-          const newDate = addHours(now, 5);
+          const newDate = addHours(now, 8);
 
         const timeOut = format(newDate, 'HH:mm');
         const timeFormat = 'HH:mm';
