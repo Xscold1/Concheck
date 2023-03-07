@@ -129,9 +129,8 @@ const TIMEIN = async (req, res) =>{
         const now = new Date();
 
         const date = format(now, 'yyyy-MM-dd');
-        const timezone = parseFromTimeZone(now, { timeZone: 'Singapore' })
         
-        const timeIn = format(timezone, 'HH:mm');
+        const timeIn = format(now, 'HH:mm');
 
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
         .catch((error) =>{
@@ -210,9 +209,7 @@ const TIMEOUT = async (req, res) =>{
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
 
-        const timezone = parseFromTimeZone(now, { timeZone: 'Singapore' })
-        
-        const timeOut = format(timezone, 'HH:mm');
+        const timeOut = format(now, 'HH:mm');
         const timeFormat = 'HH:mm';
 
         //update Dtr to accept Timeout and be use
