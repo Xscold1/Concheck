@@ -304,7 +304,7 @@ const TIMEOUT = async (req, res) =>{
 
             //check if there is overtime
             if (isOverTime) {
-                overTimeHours = differenceInHours(timeOutParse)
+                overTimeHours = differenceInHours(timeOutParse, endShiftParse)
                 overTimeRate = hourlyRate * 1.5;
                 overTimePay = (overTimeHours * overTimeRate);
                 weeklySalary += overTimePay;
