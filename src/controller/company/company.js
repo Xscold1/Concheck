@@ -183,6 +183,8 @@ const GET_ENGINEER_ACCOUNT_BY_ID = async (req,res) => {
             throw new Error("Failed to find engineer account");
         })
 
+        console.log(findEngineerAccount)
+
         if(!findEngineerAccount) {
             return res.send({
                 status:"FAILED",
@@ -193,12 +195,21 @@ const GET_ENGINEER_ACCOUNT_BY_ID = async (req,res) => {
             })
         }
 
+        const findEngineerUserAccount = await Engineer.findOne({userId:findEngineerAccount.userId})
         res.send({
             status:"SUCCESS",
             statusCode:200,
             response:{
                 message:"Fetch Successfully",
-                data:findEngineerAccount
+                data:{
+                    imageUrl:findEngineerAccount.imageUrl,
+                    firstName:findEngineerAccount.firstName,
+                    lastName:findEngineerAccount.lastName,
+                    address:findEngineerAccount.address,
+                    licenseNumber:findEngineerAccount.licenseNumber,
+                    email:findEngineerUserAccount.email,
+                    password:findEngineerUserAccount.password
+                }
             }
         })
 

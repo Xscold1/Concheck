@@ -404,12 +404,26 @@ const GET_CREW_BY_ID = async (req, res) => {
                 }
             })
         }
+        const fetchCrewUserDetails = await User.findOne({userId:fetchCrewDetails.userId})
+        
         res.send({
             status: "SUCCESS",
             statusCode:200,
             response:{
                 message:"Successfully fetch data",
-                data: fetchCrewDetails
+                data: {
+                    imageUrl:fetchCrewDetails.imageUrl,
+                    firstName:fetchCrewDetails.firstName,
+                    lastName:fetchCrewDetails.lastName,
+                    address:fetchCrewDetails.address,
+                    contactNumber:fetchCrewDetails.contactNumber,
+                    startShift:fetchCrewDetails.startShift,
+                    endShift:fetchCrewDetails.endShift,
+                    dailyRate:fetchCrewDetails.dailyRate,
+                    hourlyRate:fetchCrewDetails.hourlyRate,
+                    email:fetchCrewUserDetails.email,
+                    password:fetchCrewUserDetails.password
+                }
             }
         })
         

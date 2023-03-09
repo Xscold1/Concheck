@@ -288,12 +288,21 @@ const GET_COMPANY_ACCOUNT_BY_ID = async (req, res) => {
             })
         }
 
+        const findUserAccount = await User.findOne({userId:findCompanyAccount.userId})
+
         res.send({
             status:"SUCCESS",
             statusCode:200,
             response:{
                 message:"Fetch Successfully",
-                data:findCompanyAccount
+                data:{
+                    imageUrl:findCompanyAccount.imageUrl,
+                    companyName:findCompanyAccount.companyName,
+                    address:findCompanyAccount.address,
+                    contactNumber:findCompanyAccount.contactNumber,
+                    email:findUserAccount.email,
+                    password:findUserAccount.password
+                }
             }
         })
 
