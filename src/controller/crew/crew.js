@@ -220,7 +220,7 @@ const TIMEOUT = async (req, res) =>{
         const newDate = addHours(now, 8);
 
         // const timeOut = format(newDate, 'HH:mm');
-        const timeOut = "16:30"
+        const timeOut = format(newDate, 'HH:mm');
         const timeFormat = 'HH:mm';
 
         //update Dtr to accept Timeout and be use
