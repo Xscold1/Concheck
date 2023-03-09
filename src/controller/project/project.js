@@ -522,7 +522,7 @@ const GET_DAILY_REPORT_BY_DATE = async (req, res) => {
 
         console.log(date)
 
-        const findDailyReport = await dailyReport.findOne({projectId: projectId, date: date})
+        const findDailyReport = await DailyReport.findOne({projectId: projectId, date: date})
         .catch((error) => {
             console.error(error)
             throw new Error ("An error occurred while fetching daily reports")
