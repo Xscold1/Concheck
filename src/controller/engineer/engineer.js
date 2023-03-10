@@ -210,10 +210,6 @@ const DELETE_PROJECT = async (req, res) => {
     try {
         const {projectId} = req.params
         const findByIdAndDelete = await Project.findOneAndDelete({projectId: projectId})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to delete project");
-        })
 
         if(!findByIdAndDelete || findByIdAndDelete === undefined || findByIdAndDelete === null){
             return res.send({

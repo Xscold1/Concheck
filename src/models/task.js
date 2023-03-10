@@ -15,10 +15,20 @@ const taskSchema = new Schema({
         type: Date,
         required: true
     },
+    status:{
+        type: String,
+        required: true
+    },
     projectId: {
         type:Number,
         ref: 'project',
     },
+    remarks:{
+        type: String,
+    },
+    description:{
+        type: String,
+    }
 })
 
 taskSchema.plugin(AutoIncrement, {inc_field: 'taskId'});

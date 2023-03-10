@@ -17,7 +17,6 @@ router.get('/get-all-daily-report-by-project/:projectId', auth,projectController
 router.get('/get-image-by-project/:projectId', auth,projectController.GET_IMAGE_BY_PROJECT_ID)
 router.get('/get-image-by-id/:imageId', auth,projectController.GET_IMAGE_BY_ID)
 router.get('/get-daily-report-by-date/:projectId/:date', auth,projectController.GET_DAILY_REPORT_BY_DATE)
-router.get('/download-csv-by-project/:projectId', auth, projectController.DOWNLOAD_CSV_BY_PROJECT)
 router.put('/edit-task/:taskId', auth,projectController.EDIT_TASK)
 router.put('/edit-daily-report/:dailyReportId', auth,projectController.EDIT_DAILY_REPORT)
 router.put('/edit-image/:imageId', auth,projectController.EDIT_IMAGE)
@@ -25,5 +24,6 @@ router.delete('/delete-task/:taskId' , auth, projectController.DELETE_TASK)
 router.delete('/delete-daily-report/:dailyReportId' , auth, projectController.DELETE_DAILY_REPORT)
 router.delete('/delete-crew/:crewId' , auth, projectController.DELETE_CREW)
 router.delete('/delete-image-by-id/:imageId' , auth, projectController.DELETE_IMAGE_BY_ID)
+router.put('/update-task/:taskId' , auth , projectController.UPDATE_TASK)
 
 module.exports = router

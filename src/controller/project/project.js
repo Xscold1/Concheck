@@ -3,8 +3,8 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-const {format, parse, parseISO} = require('date-fns');
+
+const {format, parse, parseISO, isBefore, isAfter, isEqual} = require('date-fns');
 const path = require('path');
 const os = require('os');
 
@@ -23,47 +23,70 @@ const {userSchema, crewDetailsSchema} = require('../../validations/userSchema');
 //global variables
 const saltRounds = 10
 
+
 const ADD_TASK = async (req, res) => {
     try {
+        const {projectId} = req.params;
+        const {taskName, startDate, endDate, status} = req.body;
 
-        const {projectId} = req.params
-        
-        const {taskName,startDate, endDate} = req.body;
+        const findProject = await Project.findOne({projectId: projectId});
 
-        const findProject = await Project.findOne({projectId: projectId})
-        .catch((error)=>{
-            throw new Error("An error occurred while searching for project ");
-        })
-
-        
-
-        if(startDate < findProject.startDate.toISOString().split("T")[0]){
+        if (!findProject) {
             return res.send({
                 status:"FAILED",
                 statusCode:400,
                 response:{
-                    message:"Cannot add task that is less than startDate of the project"
+                    message:"Project not found"
                 }
-            })
-        }else if(endDate > findProject.endDate.toISOString().split("T")[0]){
+            });
+        }
+
+        const projectStartDate = parseISO(findProject.startDate.toISOString().split("T")[0]);
+        const projectEndDate = parseISO(findProject.endDate.toISOString().split("T")[0]);
+        const taskStartDate = parseISO(startDate);
+        const taskEndDate = parseISO(endDate);
+
+        if (isBefore(taskStartDate, projectStartDate)) {
             return res.send({
                 status:"FAILED",
                 statusCode:400,
                 response:{
-                    message:"Cannot add task that is greater than endDate of the project"
+                    message:"Cannot add task that starts before the project start date"
                 }
-            })
+            });
+        } else if (isAfter(taskEndDate, projectEndDate)) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Cannot add task that ends after the project end date"
+                }
+            });
+        } else if (isAfter(taskStartDate, taskEndDate )) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Task start date cannot be after task end date"
+                }
+            });
+        }else if (isEqual(taskStartDate, taskEndDate)){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Task Date cannot be equal"
+                }
+            });
         }
 
         const addTask = await Task.create({
-            taskName:taskName,
-            startDate:startDate,
-            endDate:endDate,
+            taskName: taskName,
+            startDate: taskStartDate,
+            endDate: taskEndDate,
+            status: status,
             projectId: projectId,
-        }).catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to add task");
-        })
+        });
 
         res.send({
             status:"SUCCESS",
@@ -71,8 +94,7 @@ const ADD_TASK = async (req, res) => {
             response:{
                 message:"Task added successfully"
             }
-        })
-
+        });
     } catch (error) {
         console.error(error);
         res.send({
@@ -81,9 +103,9 @@ const ADD_TASK = async (req, res) => {
             response:{
                 message:"Failed to add task"
             }
-        })
+        });
     }
-}
+};
 
 const ADD_DAILY_REPORT = async (req,res)=>{
     try {
@@ -93,6 +115,18 @@ const ADD_DAILY_REPORT = async (req,res)=>{
         const now = new Date();
         const date = format(now, 'MM-dd-yyyy');
 
+        const isExist = await  DailyReport.findOne({date: date, projectId:projectId})
+
+        if(isExist){
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"Already added daily report today click edit to edit daily report"
+                }
+            })
+        }
+
         const insertDailyReport = await DailyReport.create({
             remarks:remarks,
             weatherReport:weatherReport,
@@ -100,9 +134,6 @@ const ADD_DAILY_REPORT = async (req,res)=>{
             hoursDelay:hoursDelay,
             projectId: projectId,
             date:date
-        }).catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to create DailyReport");
         })
 
         res.send({
@@ -799,75 +830,6 @@ const EDIT_IMAGE = async(req,res) => {
     }
 }
 
-const DOWNLOAD_CSV_BY_PROJECT = async (req, res) => {
-    try {
-        const {projectId} = req.params
-        //to ensure that the csv will be save on user download floder
-        const DOWNLOAD_DIR = path.join(os.homedir(), 'Downloads');
-        const now = new Date();
-        const date = format(now, 'yyyy-MM-dd');
-        const timeIn = format(now, 'HH:mm:ss');
-        // Get all the CSV data from the database
-        const findProject = await Project.findOne({projectId:projectId})
-        const csvData = await Csv.find({projectId: projectId})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("An error occurred while fetching csv data from the database");
-        })
-
-
-        if(!csvData || csvData.length === 0) {
-            return res.json({status: 'FAILED', statusCode: 400, message: "No Csv Data Available"});
-        }
-
-        // Define the headers for the CSV file
-        const csvHeaders = [
-            { id: 'Name', title: 'Name' },
-            { id: 'monday', title: 'Monday' },  
-            { id: 'teusday', title: 'Tuesday' },
-            { id: 'wednesDay', title: 'Wednesday' },
-            { id: 'thursDay', title: 'Thursday' },
-            { id: 'friday', title: 'Friday' },
-            { id: 'totalHoursWork', title: 'Total Hours Worked' },
-            { id: 'totalOverTimeHours', title: 'Total Overtime Hours' },
-            { id: 'totalLateHours', title: 'Total Late Hours' },
-            { id: 'weeklySalary', title: 'Weekly Salary' },
-        ];
-
-        // Create the CSV writer with the defined headers
-        const csvWriter = createCsvWriter({
-            path: path.join(DOWNLOAD_DIR, `${date}-crewRecord - ${findProject.projectName}.csv`),
-            header: csvHeaders
-        });
-
-        // Write the CSV data to the file
-        await csvWriter.writeRecords(csvData)
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("An error occurred while fetching csv data from the database");
-        })
-
-        return res.send({
-            status: 'SUCCESS',
-            statusCode: 200,
-            response: {
-                message: 'CSV file written successfully'
-            }
-        });
-        
-
-    } catch (error) {
-        console.error(error);
-        res.send({
-            status: "INTERNAL SERVER ERROR",
-            statusCode:500,
-            response:{
-                message: "An error occurred while downloading csv"
-            }
-        })
-    }
-}
-
 const DELETE_TASK = async (req,res) => {
     try {
         const {taskId} = req.params
@@ -1028,6 +990,46 @@ const DELETE_CREW = async (req,res) =>{
     }
 }
 
+const UPDATE_TASK = async (req, res) => {
+    try {
+
+        const {taskId} = req.params
+
+        const {remarks, description} = req.body
+
+        const findTask = await Task.findOne({taskId:taskId})
+
+        if(!findTask || findTask === undefined || findTask === null) {
+            return res.send({
+                status:"FAILED",
+                statusCode:400,
+                response:{
+                    message:"No Task found"
+                }
+            })
+        }
+
+        const updateTask = await Task.updateOne({taskId:taskId}, {$set: {remarks:remarks, description: description}})
+
+        res.send({
+            status:"SUCCESS",
+            statusCode:200,
+            response:{
+                message:"Updated task successfully"
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status:"INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                message:"An error occurred while updating Task",
+            }
+        })
+    }
+}
+
 module.exports = {
     ADD_TASK,
     ADD_CREW_ACCOUNT,
@@ -1045,9 +1047,9 @@ module.exports = {
     EDIT_TASK,
     EDIT_DAILY_REPORT,
     EDIT_IMAGE,
-    DOWNLOAD_CSV_BY_PROJECT,
     DELETE_TASK,
     DELETE_DAILY_REPORT,
     DELETE_IMAGE_BY_ID,
-    DELETE_CREW
+    DELETE_CREW,
+    UPDATE_TASK
 }

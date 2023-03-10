@@ -7,7 +7,6 @@ const Project = require('../../models/project')
 const Task = require('../../models/task')
 const Image = require('../../models/image')
 const Dtr = require('../../models/dtr')
-const Csv = require('../../models/csv')
 const dailyReport = require('../../models/dailyReport')
 
 
@@ -245,10 +244,6 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
 
         
         const findEngineerAccount = await Engineer.findOne({engineerId: engineerId})
-        .catch((error)=>{
-            console.error(error)
-            throw new Error("An error occurred while trying to find Engineer account")
-        })
         
         if(!findEngineerAccount || findEngineerAccount  === undefined || findEngineerAccount === null){
             return res.send({
@@ -267,16 +262,8 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
                 licenseNumber: engineerAccountInput.licenseNumber,
                 address: engineerAccountInput.address
             }}], {session})
-            .catch((error) =>{
-                console.error(error);
-                throw new Error("Failed to find engineer account");
-            })
     
             const updateEngineerUserAccount = await User.findOneAndUpdate({userId:findEngineerAccount.userId}, {password:hashPassword}, {session})
-            .catch((error) =>{
-                console.error(error);
-                throw new Error("Failed to find engineer account");
-            })
             
             await session.commitTransaction();
             return res.send({
@@ -294,16 +281,8 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             licenseNumber: engineerAccountInput.licenseNumber,
             address: engineerAccountInput.address
         }}], {session})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to find engineer account");
-        })
 
         const updateEngineerUserAccount = await User.findOneAndUpdate({userId:findEngineerAccount.userId}, {password:hashPassword}, {session})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to find engineer account");
-        })
         
         res.send({
             status:"SUCCESS",
@@ -333,9 +312,6 @@ const DELETE_ENGINEER = async (req,res ) =>{
         const {engineerId} = req.params
 
         const findEngineer = await Engineer.findOne({engineerId: engineerId})
-        .catch((error)=>{
-            throw new Error("An error occurred while trying to fetch engineer information")
-        })
 
         if(!findEngineer || findEngineer === null || findEngineer === undefined){
             return res.send({
@@ -364,7 +340,6 @@ const DELETE_ENGINEER = async (req,res ) =>{
             Image.deleteMany({projectId: {$in : projectIds }}),,
             Task.deleteMany({projectId: {$in : projectIds }}),,
             dailyReport.deleteMany({projectId: {$in : projectIds }}),,
-            Csv.deleteMany({projectId: {$in : projectIds }}),
             Dtr.deleteMany({projectId: {$in : projectIds }}),
             Engineer.deleteOne({engineerId:engineerId})
         ])

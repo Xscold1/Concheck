@@ -135,10 +135,21 @@ const crewDetailsSchema = joi.object({
         "number.empty": "dailyRate must not be empty"
     }),
 })
+
+const validatePassword = joi.object({
+
+    newPassword: joi.string().min(6).pattern(PASSWORD_REGEX, 'password').required().messages({
+        "string.min": "Password must have at least 6 characters",
+        "string.empty": "Password must not be empty",
+        "string.pattern.name": "Password must have at least 12 characters, no white spaces and contain at least one of the following: uppercase letters, lowercase letters, numbers and symbols"
+      }),
+});
+
 module.exports = {
     userSchema,
     companyDetailsSchema,
     engineerDetailsSchema,
     projectDetailsSchema,
-    crewDetailsSchema
+    crewDetailsSchema,
+    validatePassword
 }

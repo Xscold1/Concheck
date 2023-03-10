@@ -6,5 +6,7 @@ const upload = require('../../middleware/upload');
 
 //router.post('/register', userController.REGISTER)
 router.post('/login', userController.LOGIN)
+router.put('/change-password/:email', auth, userController.CHANGE_PASSWORD)
+router.post('/forgot-password', userController.FORGOT_PASSWORD)
 
 module.exports = router

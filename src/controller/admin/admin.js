@@ -13,7 +13,6 @@ const Project = require('../../models/project')
 const Task = require('../../models/task')
 const Image = require('../../models/image')
 const Dtr = require('../../models/dtr')
-const Csv = require('../../models/csv')
 const dailyReport = require('../../models/dailyReport')
 
 //library
@@ -539,7 +538,6 @@ const DELETE_COMPANY_ACCOUNT = async (req, res) => {
             Image.deleteMany({projectId: {$in : projectIds }}),,
             Task.deleteMany({projectId: {$in : projectIds }}),,
             dailyReport.deleteMany({projectId: {$in : projectIds }}),,
-            Csv.deleteMany({projectId: {$in : projectIds }}),
             Dtr.deleteMany({projectId: {$in : projectIds }})
         ])
         

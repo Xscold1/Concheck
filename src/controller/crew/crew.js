@@ -11,7 +11,6 @@ const { parseFromTimeZone, formatToTimeZone } = require('date-fns-timezone')
 const Crew = require('../../models/crew')
 const User = require('../../models/user')
 const Dtr = require('../../models/dtr')
-const Csv = require('../../models/csv')
 
 //utils
 const cloudinary = require('../../utils/cloudinary');
@@ -225,10 +224,6 @@ const TIMEOUT = async (req, res) =>{
 
         //update Dtr to accept Timeout and be use
         const findCrew = await Crew.findOne({crewId:crewId})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("An error occurred while trying to find crew");
-        })
 
         if(!findCrew){
             return res.send({
@@ -241,10 +236,6 @@ const TIMEOUT = async (req, res) =>{
         }
         
         const checkIfTimeInExist = await Dtr.findOne({date: date, crewId: crewId})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("An error occured while trying to find dtr");
-        })
 
         if(!checkIfTimeInExist){
             return res.send({
@@ -305,65 +296,26 @@ const TIMEOUT = async (req, res) =>{
             //check if there is overtime
             if (isOverTime) {
                 overTimeHours = differenceInHours(timeOutParse, endShiftParse)
-                overTimeRate = hourlyRate * 1.5;
-                overTimePay = (overTimeHours * overTimeRate);
+                overTimePay = (overTimeHours * hourlyRate);
                 weeklySalary += overTimePay;
             }
                 //compute late penalty
             if (isLate) {
-                    const latePenaltyRate = hourlyRate / 2;
-                    const latePenalty = (differenceInMinutes(timeInParse, startShiftParse) * (latePenaltyRate / 60));
-                    weeklySalary -= latePenalty;
+                hoursLate = differenceInHours(timeInParse, startShiftParse)
+                let latePenalty = (hoursLate * hourlyRate)
+                weeklySalary -= latePenalty;
             }
 
                 //compute underpay penalty
             if (isUnderpay) {
-                    const underpayPenaltyRate = hourlyRate / 2;
-                    const underpayPenalty = (differenceInMinutes(endShiftParse, timeOutParse) * (underpayPenaltyRate / 60));
-                    weeklySalary -= underpayPenalty;
+                let underTime = differenceInHours(timeOutParse, endShiftParse)
+                let underTimePenalty = (underTime * hourlyRate)
+                weeklySalary -= underTimePenalty;
             }
         }
 
-        console.log(weeklySalary)
         //update Dtr to reflect time out
         const updateDtr = await Dtr.updateOne({date: date, crewId: crewId}, {timeOut: timeOut})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("An error occured while trying to update dtr");
-        })
-
-        //check if there is already a csv already has the crewId
-        const csvRecord = await Csv.findOne({ crewId: crewId})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to create Crew account");
-        })
-
-        if (!csvRecord) {
-            // If the CSV record doesn't exist, create a new one
-            const newCsvRecord = new Csv({
-                Name:findCrew.firstName + '' + findCrew.lastName,
-                crewId:crewId,
-                projectId: checkIfTimeInExist.projectId,
-                [checkIfTimeInExist.dayToday]: hoursOfWork,
-                totalHoursWork:parseInt(hoursOfWork),
-                weeklySalary: weeklySalary.toFixed(2)
-            });
-            await newCsvRecord.save();
-        } else {
-            //update the database if the user is already on the csv record
-            const updateCsvRecord = await Csv.updateOne({crewId: crewId}, {$set:{
-                [checkIfTimeInExist.dayToday]: hoursOfWork,
-                totalHoursWork: csvRecord.totalHoursWork ? csvRecord.totalHoursWork + parseInt(hoursOfWork) : parseInt(hoursOfWork),
-                totalOverTimeHours:csvRecord.totalOverTimeHours ? csvRecord.totalOverTimeHours + overTimeHours : overTimeHours,
-                totalLateHours: csvRecord.totalLateHours ? csvRecord.totalLateHours + hoursLate : hoursLate,
-                weeklySalary: csvRecord.weeklySalary.toFixed(2) ? csvRecord.weeklySalary.toFixed(2) + weeklySalary.toFixed(2) : weeklySalary.toFixed(2)
-            }})
-            .catch((error) =>{
-                console.error(error);
-                throw new Error("Failed to create csv");
-            })
-        }
     
         return res.send({
             status:"SUCCESS",
@@ -454,9 +406,6 @@ const GET_DTR_BY_CREW_ID = async (req, res) => {
         const {crewId} = req.params
 
         const findDtr = await Dtr.findOne({crewId:crewId, dayToday: daysInWeek[now.getDay()]})
-        .catch((error) =>{
-            throw new Error("An error occurred while trying to fetch dtr data")
-        })
             
         if(!findDtr){
             return res.send({
@@ -489,7 +438,21 @@ const GET_DTR_BY_CREW_ID = async (req, res) => {
             }
         })
     }
-    
+}
+
+const DOWNLOAD_DTR = async (req, res) => {
+    try {
+        
+    } catch (error) {
+        console.error(error)
+        res.send({
+            status: "INTERNAL SERVER ERROR",
+            statusCode:500,
+            response:{
+                messsage: "Failed to get timein timeout details"
+            }
+        })
+    }
 }
 
 module.exports = {

@@ -19,6 +19,10 @@ const dtrSchema = new Schema({
    dayToday: {
       type:String,
    },
+
+   dailySalary:{
+      type:Number
+   },
    
    projectId: {
       type:Number,
