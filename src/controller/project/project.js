@@ -520,8 +520,6 @@ const GET_DAILY_REPORT_BY_DATE = async (req, res) => {
     try {
         const {date, projectId} = req.params
 
-        console.log(date)
-
         const findDailyReport = await DailyReport.findOne({projectId: projectId, date: date})
         .catch((error) => {
             console.error(error)

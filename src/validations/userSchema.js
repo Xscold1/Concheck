@@ -67,20 +67,11 @@ const projectDetailsSchema = joi.object({
         "string.empty": "projectName must not be empty"
     }),
 
-    // startDate:joi.date()
-    // .max(CUT_OFF_DATE)
-    // .required()
-    // .message({
-    //     "date.max": "Start date must not be empty",
-    //     "date.base": "Must be a valid date"
-    // }),
-    // endDate:joi.date()
-    // .max(CUT_OFF_DATE)
-    // .required()
-    // .message({
-    //     "date.max": "endDate date must not be empty",
-    //     "date.base": "Must be a valid date"
-    // }),
+    startDate:joi.date()
+    .required(),
+    
+    endDate:joi.date()
+    .required(),
 
     projectEngineer: joi.string()
     .required()
