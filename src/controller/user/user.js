@@ -60,7 +60,7 @@ const LOGIN = async (req, res) => {
         }else if(checkEmail.roleId === "2" ||  checkEmail.roleId === 2){
 
             const fetchCompanyInfo = await Company.findOne({userId:checkEmail.userId })
-            const token = tokenization.generateToken({id: fetchCompanyInfo.companyId, roleId:checkEmail.roleId, userId:checkEmail.userId})
+            const token = tokenization.generateToken({id: fetchCompanyInfo.companyId, roleId:checkEmail.roleId})
             
             return res.send({
                 status:"SUCCESS",
@@ -74,7 +74,7 @@ const LOGIN = async (req, res) => {
         }else if(checkEmail.roleId === "3" || checkEmail.roleId === 3){
             const fetchEngineerInfo = await Engineer.findOne({userId:checkEmail.userId })
             
-            const token = tokenization.generateToken({ id: fetchEngineerInfo.engineerId, roleId:checkEmail.roleId, userId:checkEmail.userId})
+            const token = tokenization.generateToken({ id: fetchEngineerInfo.engineerId, roleId:checkEmail.roleId})
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
@@ -87,7 +87,7 @@ const LOGIN = async (req, res) => {
         }else if (checkEmail.roleId === "4" || checkEmail.roleId === 4){
             const fetchCrewInfo = await Crew.findOne({userId: checkEmail.userId  })
 
-            const token = tokenization.generateToken({id: fetchCrewInfo.crewId, roleId:checkEmail.roleId, userId:checkEmail.userId})
+            const token = tokenization.generateToken({id: fetchCrewInfo.crewId, roleId:checkEmail.roleId})
 
             return res.send({
                 status:"SUCCESS",
