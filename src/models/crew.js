@@ -44,6 +44,10 @@ const crewSchema = new Schema({
         required: true
     },
 
+    remarks:{
+        type:String,
+    },
+
     projectId: {
         type:Number,
         ref: 'projects'
