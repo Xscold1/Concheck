@@ -1106,7 +1106,7 @@ const DOWNLOAD_SUMMARY = async (req, res)=>{
         }
   
         // Use the fast-csv package to generate the CSV file and send it in the response
-        const filePath = path.join(os.homedir(), 'Downloads', 'weekly_salary.csv');
+        const filePath = path.join(os.homedir(), 'Downloads', 'project-summary.csv');
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
         csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
