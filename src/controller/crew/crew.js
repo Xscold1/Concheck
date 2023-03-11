@@ -311,6 +311,10 @@ const TIMEOUT = async (req, res) =>{
 
         let remarks = ""
 
+        if(hoursOfWork !== 0){
+            remarks = "Present"
+        }
+
         if(isLate) {
             remarks = "Late"
         }
@@ -319,9 +323,7 @@ const TIMEOUT = async (req, res) =>{
             remarks = "Half Day"
         }
 
-        if(hoursOfWork !== 0){
-            remarks = "Present"
-        }
+        
         //update Dtr to reflect time out
         const updateDtr = await Dtr.updateOne({date: date, crewId: crewId}, 
             {$set:{
