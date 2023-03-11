@@ -42,10 +42,6 @@ const CREATE_PROJECT = async (req, res) => {
 
         const uploadImage = await cloudinary.uploader.upload(req.file.path)
         const checkProjecifExist = await Project.findOne({projectName: createProjectInfo.projectName})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("An error occurred while fetching project information");
-        })
 
         if(checkProjecifExist){
             return res.send({
@@ -58,10 +54,6 @@ const CREATE_PROJECT = async (req, res) => {
         }
         
         const findEngineerIfExist = await Engineer.findOne({engineerId: engineerId})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("An error occurred while fetching engineer information");
-        })
 
         if(!findEngineerIfExist || findEngineerIfExist === undefined || findEngineerIfExist === []){
             return res.send({
@@ -78,10 +70,6 @@ const CREATE_PROJECT = async (req, res) => {
             companyId: findEngineerIfExist.companyId,
             engineerId: findEngineerIfExist.engineerId,
             imageUrl: uploadImage.url
-        })
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to create project");
         })
 
         res.send({
@@ -108,20 +96,31 @@ const GET_ALL_PROJECT = async (req, res) => {
     try {
         const {engineerId} = req.params
         const fetchAllProject = await Project.find({engineerId: engineerId})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to to find project");
-        })
-
+        
         if(fetchAllProject.length === 0 || fetchAllProject === undefined || fetchAllProject === null){
             return res.send({
                 status:"SUCCESS",
                 statusCode:200,
                 response:{
-                    message:"There is no available project Click start new project to create Project"
+                    message:"There is no available project. Click start new project to create Project"
                 }
             })
         }
+    
+        // Check if target date is equal to today's date
+        const today = new Date()
+        const projectsToUpdate = fetchAllProject.filter(project => {
+            return project.endDate.getDate() === today.getDate() &&
+                   project.endDate.getMonth() === today.getMonth() &&
+                   project.endDate.getFullYear() === today.getFullYear()
+        })
+    
+        // Update the status of projects that meet the criteria
+        projectsToUpdate.forEach(async (project) => {
+                project.status = "completed"
+                await project.save()
+        })
+    
         res.send({
             status:"SUCCESS",
             statusCode:200,

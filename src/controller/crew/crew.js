@@ -2,9 +2,12 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
-const {format, parse, differenceInHours, differenceInMinutes} = require('date-fns');
+const {format, parse, differenceInHours} = require('date-fns');
 const _ = require('lodash');
-const { parseFromTimeZone, formatToTimeZone } = require('date-fns-timezone')
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 
 
 //models
@@ -140,10 +143,6 @@ const TIMEIN = async (req, res) =>{
         const timeIn = format(newDate, 'HH:mm');
 
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to find Existing Dtr");
-        })
 
         const findCrew = await Crew.findOne({crewId: crewId})
 
@@ -166,15 +165,11 @@ const TIMEIN = async (req, res) =>{
             date: date,
             crewId: crewId,
             projectId: findCrew.projectId,
-            dayToday: daysInWeek[now.getDay()]
+            dayToday: daysInWeek[now.getDay()],
+            totalSalary: 0
         })
 
         await newCrewTimeIn.save()
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to find Existing Dtr");
-        })
-
         res.send({
             status:"SUCCESS",
             statusCode:200,
@@ -199,15 +194,6 @@ const TIMEOUT = async (req, res) =>{
     try {
         const {crewId} = req.params
 
-        const daysInWeek = {
-            "0": 'sunday',
-            "1": 'monday',
-            "2": 'tuesday',
-            "3": 'wednesday',
-            "4": 'thursday',
-            "5": 'friday',
-            "6": 'saturday'
-        }
         //date formats
         const now = new Date();
         const date = format(now, 'yyyy-MM-dd');
@@ -285,37 +271,48 @@ const TIMEOUT = async (req, res) =>{
         //compute total hours worked
         const hoursOfWork = (differenceInHours(timeOutParse, timeInParse) - 1);
         
-        let weeklySalary = 0;
         let overTimeHours = 0;
         let hoursLate = 0
+        let underTime = 0
+        let dailySalary = 0
         //compute weekly salary based on hourly rate or daily rate
         if (findCrew.hourlyRate) {
         const hourlyRate = findCrew.hourlyRate;
-        weeklySalary = hoursOfWork * hourlyRate;
+        dailySalary = hoursOfWork * hourlyRate;
 
             //check if there is overtime
             if (isOverTime) {
                 overTimeHours = differenceInHours(timeOutParse, endShiftParse)
                 overTimePay = (overTimeHours * hourlyRate);
-                weeklySalary += overTimePay;
+                dailySalary += overTimePay;
             }
                 //compute late penalty
             if (isLate) {
                 hoursLate = differenceInHours(timeInParse, startShiftParse)
                 let latePenalty = (hoursLate * hourlyRate)
-                weeklySalary -= latePenalty;
+                dailySalary -= latePenalty;
             }
 
                 //compute underpay penalty
             if (isUnderpay) {
-                let underTime = differenceInHours(timeOutParse, endShiftParse)
+                underTime = differenceInHours(timeOutParse, endShiftParse)
                 let underTimePenalty = (underTime * hourlyRate)
-                weeklySalary -= underTimePenalty;
+                dailySalary -= underTimePenalty;
             }
         }
 
         //update Dtr to reflect time out
-        const updateDtr = await Dtr.updateOne({date: date, crewId: crewId}, {timeOut: timeOut})
+        const updateDtr = await Dtr.updateOne({date: date, crewId: crewId}, 
+            {$set:{
+                timeOut: timeOut,
+                dailySalary: dailySalary,
+                dailyHoursWork:hoursOfWork,
+                dailyLateHours:hoursLate,
+                dailyOverTime:overTimeHours,
+                dailyUnderTime:underTime,
+                totalSalary: checkIfTimeInExist.totalSalary + dailySalary,
+            }
+        })
     
         return res.send({
             status:"SUCCESS",
@@ -441,15 +438,54 @@ const GET_DTR_BY_CREW_ID = async (req, res) => {
 }
 
 const DOWNLOAD_DTR = async (req, res) => {
+    
     try {
+        const { crewId } = req.params;
+        const findCrew = await Crew.findOne({ crewId }); // Find the specific crew member
+        const data = await Dtr.find({ crewId }); // Find all Dtr records for the specified crewId
+        let totalSalary = 0;
         
-    } catch (error) {
-        console.error(error)
+        // Calculate the total salary for the crew member
+        for (let i = 0; i < data.length; i++) {
+            totalSalary += data[i].dailySalary;
+        }
+        
+        // Add the total salary to the data array
+        data.push({totalSalary: totalSalary});
+
+        const csvWriter = createCsvWriter({
+            path: `${findCrew.firstName}-${findCrew.lastName}-dtr.csv `,
+            header: [
+                {id: 'timeIn', title: 'Time In'},
+                {id: 'timeOut', title: 'Time Out'},
+                {id: 'date', title: 'Date'},
+                {id: 'dayToday', title: 'Day Today'},
+                {id: 'dailySalary', title: 'Daily Salary'},
+                {id: 'totalSalary', title: 'Total Salary'},
+            ]
+        });
+
+        csvWriter.writeRecords(data)
+        .then(() => {
+            res.download(`${findCrew.firstName}-${findCrew.lastName}-dtr.csv`);
+        })
+        .catch((err) => {
+            console.log('Error writing CSV file: ', err);
+            res.send({
+                status: "FAILED",
+                statusCode:400,
+                response:{
+                    messsage: "An error occurred while downloading csv"
+                }
+            })
+        });
+    } catch (err) {
+        console.error(err)
         res.send({
             status: "INTERNAL SERVER ERROR",
             statusCode:500,
             response:{
-                messsage: "Failed to get timein timeout details"
+                messsage: "An error occurred while downloading csv"
             }
         })
     }
@@ -460,5 +496,6 @@ module.exports = {
     TIMEIN,
     TIMEOUT,
     GET_CREW_BY_ID,
-    GET_DTR_BY_CREW_ID
+    GET_DTR_BY_CREW_ID,
+    DOWNLOAD_DTR
 }

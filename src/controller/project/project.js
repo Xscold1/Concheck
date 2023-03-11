@@ -1,8 +1,8 @@
-
 //import
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
+const csv = require('fast-csv');
 
 const {format, parse, parseISO, isBefore, isAfter, isEqual} = require('date-fns');
 const path = require('path');
@@ -995,7 +995,7 @@ const UPDATE_TASK = async (req, res) => {
 
         const {taskId} = req.params
 
-        const {remarks, description} = req.body
+        const {remarks, description, percentageDone} = req.body
 
         const findTask = await Task.findOne({taskId:taskId})
 
@@ -1009,7 +1009,7 @@ const UPDATE_TASK = async (req, res) => {
             })
         }
 
-        const updateTask = await Task.updateOne({taskId:taskId}, {$set: {remarks:remarks, description: description}})
+        const updateTask = await Task.updateOne({taskId:taskId}, {$set: {remarks:remarks, description: description, percentageDone:percentageDone}})
 
         res.send({
             status:"SUCCESS",
@@ -1029,6 +1029,8 @@ const UPDATE_TASK = async (req, res) => {
         })
     }
 }
+
+ 
 
 module.exports = {
     ADD_TASK,
@@ -1051,5 +1053,5 @@ module.exports = {
     DELETE_DAILY_REPORT,
     DELETE_IMAGE_BY_ID,
     DELETE_CREW,
-    UPDATE_TASK
+    UPDATE_TASK,
 }

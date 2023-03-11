@@ -21,7 +21,34 @@ const dtrSchema = new Schema({
    },
 
    dailySalary:{
-      type:Number
+      type:Number,
+      default:0
+   },
+
+   dailyHoursWork:{
+      type:Number,
+      default:0
+   },
+
+   dailyLateHours:{
+      type:Number,
+      default:0
+   },
+
+   dailyOverTime:{
+      type:Number,
+      default:0
+   },
+
+   dailyUnderTime:{
+      type:Number,
+      default:0
+
+   },
+
+   totalSalary:{
+      type:Number,
+      default: 0
    },
    
    projectId: {

@@ -28,6 +28,10 @@ const taskSchema = new Schema({
     },
     description:{
         type: String,
+    },
+
+    percentageDone:{
+        type: String,
     }
 })
 
