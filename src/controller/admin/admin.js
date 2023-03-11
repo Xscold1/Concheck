@@ -401,9 +401,6 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
     try {
         session.startTransaction()
         const {companyId} = req.params
-        const updateUser = {
-            password: req.body.password,
-        }
 
         const registerCompany = {
             companyName: req.body.companyName,
@@ -411,7 +408,6 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
             contactNumber: req.body.contactNumber
         }
 
-        const hashPassword = bcrypt.hashSync(updateUser.password, saltRounds)
         const findCompanyUser = await Company.findOne({companyId: companyId})
 
         if(!req.file){
@@ -421,13 +417,6 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
                 throw new Error("Failed to update company account");
             })
 
-            const updateCompanyUserAccount = await User.findOneAndUpdate({userId: findCompanyUser.userId}, {password: hashPassword},{session})
-            .catch((error) =>{
-                console.error(error)
-                throw new Error("Failed to update company account");
-            })
-            console.log(hashPassword)
-            console.log(updateCompanyUserAccount)
             await session.commitTransaction();
             return res.send({
                 status:"SUCCESS",
@@ -447,12 +436,6 @@ const EDIT_COMPANY_ACCOUNT = async (req, res) =>{
                 imageUrl: uploadImage.url,
             }}], {session})
         .catch((error) =>{
-            throw new Error("Failed to update company account");
-        })
-
-        const updateCompanyUserAccount = await User.findOneAndUpdate({userId:findCompanyUser.userId}, {password: hashPassword},{session})
-        .catch((error) =>{
-            console.error(error)
             throw new Error("Failed to update company account");
         })
 

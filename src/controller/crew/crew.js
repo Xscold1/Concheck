@@ -33,10 +33,6 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
             contactNumber: req.body.contactNumber,
         } 
 
-        const userAccountDetails = {
-            password: req.body.password,
-        }
-        const hashPassword = bcrypt.hashSync(userAccountDetails.password, saltRounds)
         const findCrew = await Crew.findOne({crewId: crewId})
 
         if(!findCrew || findCrew === undefined || findCrew === null) {
@@ -45,18 +41,6 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 statusCode:400,
                 response:{
                     message: "Crew does not exist"
-                }
-            })
-        }
-
-        const updatePassword = await User.findOneAndUpdate({userId:findCrew.userId},{password:hashPassword})
-
-        if(!updatePassword){
-            return res.send({
-                status: "FAILED",
-                statusCode:400,
-                response:{
-                    message: "Failed to update user Account Details"
                 }
             })
         }

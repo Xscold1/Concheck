@@ -229,9 +229,6 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
     try {
         session.startTransaction()
         const {engineerId} = req.params
-        const userAccountInput = {
-            password: req.body.password,
-        } 
 
         const engineerAccountInput = {
             firstName: req.body.firstName,
@@ -240,9 +237,6 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             address: req.body.address
         }
 
-        const hashPassword = bcrypt.hashSync(userAccountInput.password, saltRounds)
-
-        
         const findEngineerAccount = await Engineer.findOne({engineerId: engineerId})
         
         if(!findEngineerAccount || findEngineerAccount  === undefined || findEngineerAccount === null){
@@ -281,8 +275,6 @@ const EDIT_ENGINEER_ACCOUNT = async (req, res)=>{
             licenseNumber: engineerAccountInput.licenseNumber,
             address: engineerAccountInput.address
         }}], {session})
-
-        const updateEngineerUserAccount = await User.findOneAndUpdate({userId:findEngineerAccount.userId}, {password:hashPassword}, {session})
         
         res.send({
             status:"SUCCESS",
