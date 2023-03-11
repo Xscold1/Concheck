@@ -1083,7 +1083,6 @@ const DOWNLOAD_WEEKLY_REPORT = async (req, res) =>{
 const DOWNLOAD_SUMMARY = async (req, res)=>{
     try {
         const {projectId} = req.params;
-  
         const findDtr = await Dtr.find({projectId: projectId,});
         const crewIds = findDtr.map(crewId => crewId.crewId)
         const findCrew = await Crew.find({crewId: {$in: crewIds}})

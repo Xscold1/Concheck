@@ -194,7 +194,7 @@ const GET_ENGINEER_ACCOUNT_BY_ID = async (req,res) => {
             })
         }
 
-        const findEngineerUserAccount = await Engineer.findOne({userId:findEngineerAccount.userId})
+        const findEngineerUserAccount = await User.findOne({userId:findEngineerAccount.userId})
         res.send({
             status:"SUCCESS",
             statusCode:200,
