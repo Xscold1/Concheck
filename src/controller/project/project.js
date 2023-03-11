@@ -1080,12 +1080,49 @@ const DOWNLOAD_WEEKLY_REPORT = async (req, res) =>{
     }
 }
 
-const DOWNLOAD_WEEKLY_REPORT_BY_DATE = async (req, res)=>{
+const DOWNLOAD_SUMMARY = async (req, res)=>{
     try {
+        const {projectId} = req.params;
+  
+        const findDtr = await Dtr.find({projectId: projectId,});
+        const crewIds = findDtr.map(crewId => crewId.crewId)
+        const findCrew = await Crew.find({crewId: {$in: crewIds}})
         
-    } catch (error) {
+        const rows = []; // Initialize an array to store the rows of the CSV file
+        const headers = ['name', 'weeklyHoursLate', 'weeklyOverTime', 'weeklyHoursWork', 'weeklyUndertime', 'weeklySalary',];
+        // Define the headers of the CSV file
         
-    }
+        // Iterate through the crew members and compute the required values
+        for (let i = 0; i < findCrew.length; i++) {
+           const crew = findCrew[i];
+           const crewDtr = findDtr.filter(dtr => dtr.crewId === crew.crewId);
+           const weeklyHoursLate = crewDtr.reduce((total, dtr) => total + dtr.dailyLateHours, 0);
+           const weeklyOverTime = crewDtr.reduce((total, dtr) => total + dtr.dailyOverTime, 0);
+           const weeklySalary = crewDtr.reduce((total, dtr) => total + dtr.totalSalary, 0);
+           const weeklyHoursWork = crewDtr.reduce((total, dtr) => total + dtr.dailyHoursWork, 0);
+           const weeklyUndertime = crewDtr.reduce((total, dtr) => total + dtr.dailyUnderTime, 0);
+           const name = crew.firstName + ' ' + crew.lastName;
+           rows.push([name, weeklyHoursLate, weeklyOverTime, weeklySalary, weeklyHoursWork, weeklyUndertime]);
+        }
+  
+        // Use the fast-csv package to generate the CSV file and send it in the response
+        const filePath = path.join(os.homedir(), 'Downloads', 'weekly_salary.csv');
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+        csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
+          res.download(filePath);
+        });
+        
+     } catch (error) {
+        console.error(error)
+        res.send({
+           status:"INTERNAL SERVER ERROR",
+           statusCode:500,
+           response:{
+              message:"An error occurred while downloading weekly report",
+           }
+        })
+     }
 }
 
 
@@ -1112,5 +1149,5 @@ module.exports = {
     DELETE_CREW,
     UPDATE_TASK,
     DOWNLOAD_WEEKLY_REPORT,
-    DOWNLOAD_WEEKLY_REPORT_BY_DATE
+    DOWNLOAD_SUMMARY
 }

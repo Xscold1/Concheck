@@ -26,5 +26,6 @@ router.delete('/delete-crew/:crewId' , auth, projectController.DELETE_CREW)
 router.delete('/delete-image-by-id/:imageId' , auth, projectController.DELETE_IMAGE_BY_ID)
 router.put('/update-task/:taskId' , auth , projectController.UPDATE_TASK)
 router.get('/download-weekly-report/:projectId' , auth , projectController.DOWNLOAD_WEEKLY_REPORT)
+router.get('/download-project-summary/:projectId' , auth , projectController.DOWNLOAD_SUMMARY)
 
 module.exports = router
