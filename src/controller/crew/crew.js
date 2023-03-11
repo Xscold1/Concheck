@@ -50,10 +50,6 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
         }
 
         const updatePassword = await User.findOneAndUpdate({userId:findCrew.userId},{password:hashPassword})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed To Update Account Details");
-        })
 
         if(!updatePassword){
             return res.send({
@@ -70,10 +66,6 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 ...crewInputInfo,
                 }
             })
-            .catch((error) =>{
-                console.error(error);
-                throw new Error("Failed To Update Account Details");
-            })
 
             return res.send({
                 status:"SUCCESS",
@@ -89,11 +81,6 @@ const UPDATE_CREW_ACCOUNT_DETAILS = async (req, res) => {
                 imageUrl: uploadImage.url
             }
         })
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed To Update Account Details");
-        })
-        
 
         res.send({
             status: "Success",
@@ -363,10 +350,6 @@ const GET_CREW_BY_ID = async (req, res) => {
         const {crewId} = req.params
 
         const fetchCrewDetails = await Crew.findOne({crewId: crewId})
-        .catch((error) =>{
-            console.error(error);
-            throw new Error("Failed to find crew account details");
-        })
 
         if(!fetchCrewDetails){
             return res.send({
