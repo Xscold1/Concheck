@@ -2,13 +2,12 @@
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
-const {format, parse, differenceInHours} = require('date-fns');
+const csv = require('fast-csv');
+const {format, parse, differenceInHours, setHours} = require('date-fns');
 const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-
 
 //models
 const Crew = require('../../models/crew')
@@ -203,6 +202,7 @@ const TIMEOUT = async (req, res) =>{
             return date;
           }
         const newDate = addHours(now, 8);
+        const noon = setHours(now, 12);
 
         // const timeOut = format(newDate, 'HH:mm');
         const timeOut = format(newDate, 'HH:mm');
@@ -269,7 +269,7 @@ const TIMEOUT = async (req, res) =>{
         }
 
         //compute total hours worked
-        const hoursOfWork = (differenceInHours(timeOutParse, timeInParse) - 1);
+        let hoursOfWork = (differenceInHours(timeOutParse, timeInParse) - 1);
         
         let overTimeHours = 0;
         let hoursLate = 0
@@ -301,6 +301,27 @@ const TIMEOUT = async (req, res) =>{
             }
         }
 
+        if(weeklySalary > 0) {
+            weeklySalary = 0
+        }
+
+        if(hoursOfWork > 0 ){
+            hoursOfWork = 0
+        }
+
+        let remarks = ""
+
+        if(isLate) {
+            remarks = "Late"
+        }
+
+        if(timeInParse === noon){
+            remarks = "Half Day"
+        }
+
+        if(hoursOfWork !== 0){
+            remarks = "Present"
+        }
         //update Dtr to reflect time out
         const updateDtr = await Dtr.updateOne({date: date, crewId: crewId}, 
             {$set:{
@@ -311,6 +332,7 @@ const TIMEOUT = async (req, res) =>{
                 dailyOverTime:overTimeHours,
                 dailyUnderTime:underTime,
                 totalSalary: checkIfTimeInExist.totalSalary + dailySalary,
+                remarks: remarks,
             }
         })
     
@@ -437,7 +459,7 @@ const GET_DTR_BY_CREW_ID = async (req, res) => {
     }
 }
 
-const DOWNLOAD_DTR = async (req, res) => {
+const DOWNLOAD_DTR_FAST = async (req, res) => {
     
     try {
         const { crewId } = req.params;
@@ -453,32 +475,36 @@ const DOWNLOAD_DTR = async (req, res) => {
         // Add the total salary to the data array
         data.push({totalSalary: totalSalary});
 
-        const csvWriter = createCsvWriter({
-            path: `${findCrew.firstName}-${findCrew.lastName}-dtr.csv `,
-            header: [
-                {id: 'timeIn', title: 'Time In'},
-                {id: 'timeOut', title: 'Time Out'},
-                {id: 'date', title: 'Date'},
-                {id: 'dayToday', title: 'Day Today'},
-                {id: 'dailySalary', title: 'Daily Salary'},
-                {id: 'totalSalary', title: 'Total Salary'},
-            ]
-        });
+        const downloadsFolder = path.join(os.homedir(), 'Downloads');
 
-        csvWriter.writeRecords(data)
-        .then(() => {
-            res.download(`${findCrew.firstName}-${findCrew.lastName}-dtr.csv`);
-        })
-        .catch((err) => {
-            console.log('Error writing CSV file: ', err);
-            res.send({
-                status: "FAILED",
-                statusCode:400,
-                response:{
-                    messsage: "An error occurred while downloading csv"
-                }
-            })
-        });
+        console.log(downloadsFolder)
+        const fileName = `${findCrew.firstName}-${findCrew.lastName}-dtr.csv `
+
+        // Initialize an array to store the rows of the CSV file
+        const rows = [];
+
+        // Iterate through the Dtr records and add the data to the rows array
+        for (let i = 0; i < data.length; i++) {
+            const dtr = data[i];
+            rows.push([
+                dtr.timeIn,
+                dtr.timeOut,
+                dtr.date,
+                dtr.dayToday,
+                dtr.remarks,
+                dtr.dailySalary,
+                dtr.totalSalary || totalSalary,
+            ]);
+        }
+
+        // Use fast-csv to generate the CSV file and send it in the response
+        const filePath = path.join(os.homedir(), 'Downloads', 'Dtr.csv');
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+        csv.write(rows, { headers: true }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
+            res.download(filePath);
+          });
+
     } catch (err) {
         console.error(err)
         res.send({
@@ -491,11 +517,13 @@ const DOWNLOAD_DTR = async (req, res) => {
     }
 }
 
+
+
 module.exports = {
     UPDATE_CREW_ACCOUNT_DETAILS,
     TIMEIN,
     TIMEOUT,
     GET_CREW_BY_ID,
     GET_DTR_BY_CREW_ID,
-    DOWNLOAD_DTR
+    DOWNLOAD_DTR_FAST
 }

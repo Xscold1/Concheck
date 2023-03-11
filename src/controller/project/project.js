@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
 const csv = require('fast-csv');
-
-const {format, parse, parseISO, isBefore, isAfter, isEqual} = require('date-fns');
+const {format, parse, parseISO, isBefore, isAfter, isEqual, startOfWeek, endOfWeek } = require('date-fns');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
 
 //models
 const Project = require('../../models/project');
@@ -1030,7 +1030,64 @@ const UPDATE_TASK = async (req, res) => {
     }
 }
 
+const DOWNLOAD_WEEKLY_REPORT = async (req, res) =>{
+    try {
+       const {projectId} = req.params;
+       const today = new Date();
+       const lastSunday = endOfWeek(today, { weekStartsOn: 0 });
  
+       const findDtr = await Dtr.find({
+           projectId: projectId,
+           createdAt: { $gte: startOfWeek(today, { weekStartsOn: 0 }), $lte: lastSunday }
+       });
+       const crewIds = findDtr.map(crewId => crewId.crewId)
+       const findCrew = await Crew.find({crewId: {$in: crewIds}})
+       
+       const rows = []; // Initialize an array to store the rows of the CSV file
+       const headers = ['name', 'weeklyHoursLate', 'weeklyOverTime', 'weeklyHoursWork', 'weeklyUndertime', 'weeklySalary',];
+       // Define the headers of the CSV file
+       
+       // Iterate through the crew members and compute the required values
+       for (let i = 0; i < findCrew.length; i++) {
+          const crew = findCrew[i];
+          const crewDtr = findDtr.filter(dtr => dtr.crewId === crew.crewId);
+          const weeklyHoursLate = crewDtr.reduce((total, dtr) => total + dtr.dailyLateHours, 0);
+          const weeklyOverTime = crewDtr.reduce((total, dtr) => total + dtr.dailyOverTime, 0);
+          const weeklySalary = crewDtr.reduce((total, dtr) => total + dtr.totalSalary, 0);
+          const weeklyHoursWork = crewDtr.reduce((total, dtr) => total + dtr.dailyHoursWork, 0);
+          const weeklyUndertime = crewDtr.reduce((total, dtr) => total + dtr.dailyUnderTime, 0);
+          const name = crew.firstName + ' ' + crew.lastName;
+          rows.push([name, weeklyHoursLate, weeklyOverTime, weeklySalary, weeklyHoursWork, weeklyUndertime]);
+       }
+ 
+       // Use the fast-csv package to generate the CSV file and send it in the response
+       const filePath = path.join(os.homedir(), 'Downloads', 'weekly_salary.csv');
+       res.setHeader('Content-Type', 'text/csv');
+       res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+       csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
+         res.download(filePath);
+       });
+       
+    } catch (error) {
+       console.error(error)
+       res.send({
+          status:"INTERNAL SERVER ERROR",
+          statusCode:500,
+          response:{
+             message:"An error occurred while downloading weekly report",
+          }
+       })
+    }
+}
+
+const DOWNLOAD_WEEKLY_REPORT_BY_DATE = async (req, res)=>{
+    try {
+        
+    } catch (error) {
+        
+    }
+}
+
 
 module.exports = {
     ADD_TASK,
@@ -1054,4 +1111,6 @@ module.exports = {
     DELETE_IMAGE_BY_ID,
     DELETE_CREW,
     UPDATE_TASK,
+    DOWNLOAD_WEEKLY_REPORT,
+    DOWNLOAD_WEEKLY_REPORT_BY_DATE
 }

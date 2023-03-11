@@ -31,7 +31,7 @@ const taskSchema = new Schema({
     },
 
     percentageDone:{
-        type: String,
+        type: Number,
     }
 })
 
