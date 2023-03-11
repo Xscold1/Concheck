@@ -152,7 +152,7 @@ const CHANGE_PASSWORD = async (req, res) => {
             })
         }
 
-        const hashPassword = bcrypt.hashSync(value, 10)
+        const hashPassword = bcrypt.hashSync(value.newPassword, 10)
 
         const findAndUpdate = await User.updateOne({email:email}, {$set:{password:hashPassword}})
 
