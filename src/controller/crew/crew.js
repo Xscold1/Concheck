@@ -270,13 +270,9 @@ const TIMEOUT = async (req, res) =>{
                 let underTimePenalty = (underTime * hourlyRate)
                 dailySalary -= underTimePenalty;
             }
-        }
+        }  
 
-        if(dailySalary > 0) {
-            dailySalary = 0
-        }
-
-        if(hoursOfWork > 0 ){
+        if(hoursOfWork < 0 ){
             hoursOfWork = 0
         }
 
@@ -292,6 +288,10 @@ const TIMEOUT = async (req, res) =>{
 
         if(timeInParse === noon){
             remarks = "Half Day"
+        }
+
+        if(dailySalary < 0) {
+            dailySalary = 0
         }
 
         
@@ -446,8 +446,8 @@ const DOWNLOAD_DTR_FAST = async (req, res) => {
 
         const downloadsFolder = path.join(os.homedir(), 'Downloads');
 
-        console.log(downloadsFolder)
         const fileName = `${findCrew.firstName}-${findCrew.lastName}-dtr.csv `
+        const headers = ['name', 'time in', 'time out', 'date', 'day', 'remarks','dailySalary','totalSalary',];
 
         // Initialize an array to store the rows of the CSV file
         const rows = [];
@@ -467,10 +467,10 @@ const DOWNLOAD_DTR_FAST = async (req, res) => {
         }
 
         // Use fast-csv to generate the CSV file and send it in the response
-        const filePath = path.join(os.homedir(), 'Downloads', 'Dtr.csv');
+        const filePath = path.join(os.homedir(), 'Downloads', `${crewId}-dtr.csv`);
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-        csv.write(rows, { headers: true }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
+        csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
             res.download(filePath);
           });
 
