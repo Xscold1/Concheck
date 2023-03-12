@@ -272,8 +272,8 @@ const TIMEOUT = async (req, res) =>{
             }
         }
 
-        if(weeklySalary > 0) {
-            weeklySalary = 0
+        if(dailySalary > 0) {
+            dailySalary = 0
         }
 
         if(hoursOfWork > 0 ){
