@@ -1039,9 +1039,9 @@ const DOWNLOAD_WEEKLY_REPORT = async (req, res) =>{
        const findDtr = await Dtr.find({
            projectId: projectId,
            createdAt: { $gte: startOfWeek(today, { weekStartsOn: 0 }), $lte: lastSunday }
-       });
+       }).exec();
        const crewIds = findDtr.map(crewId => crewId.crewId)
-       const findCrew = await Crew.find({crewId: {$in: crewIds}})
+       const findCrew = await Crew.find({crewId: {$in: crewIds}}).exec()
        
        const rows = []; // Initialize an array to store the rows of the CSV file
        const headers = ['name', 'weeklyHoursLate', 'weeklyOverTime', 'weeklyHoursWork', 'weeklyUndertime', 'weeklySalary',];
@@ -1083,9 +1083,9 @@ const DOWNLOAD_WEEKLY_REPORT = async (req, res) =>{
 const DOWNLOAD_SUMMARY = async (req, res)=>{
     try {
         const {projectId} = req.params;
-        const findDtr = await Dtr.find({projectId: projectId,});
+        const findDtr = await Dtr.find({projectId: projectId,}).exec();
         const crewIds = findDtr.map(crewId => crewId.crewId)
-        const findCrew = await Crew.find({crewId: {$in: crewIds}})
+        const findCrew = await Crew.find({crewId: {$in: crewIds}}).exec()
         
         const rows = []; // Initialize an array to store the rows of the CSV file
         const headers = ['name', 'weeklyHoursLate', 'weeklyOverTime', 'weeklyHoursWork', 'weeklyUndertime', 'weeklySalary',];

@@ -432,8 +432,8 @@ const DOWNLOAD_DTR_FAST = async (req, res) => {
     
     try {
         const { crewId } = req.params;
-        const findCrew = await Crew.findOne({ crewId }); // Find the specific crew member
-        const data = await Dtr.find({ crewId }); // Find all Dtr records for the specified crewId
+        const findCrew = await Crew.findOne({ crewId }).exec(); // Find the specific crew member
+        const data = await Dtr.find({ crewId }).exec(); // Find all Dtr records for the specified crewId
         let totalSalary = 0;
         
         // Calculate the total salary for the crew member
