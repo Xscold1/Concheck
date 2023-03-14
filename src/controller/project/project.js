@@ -1069,7 +1069,7 @@ const DOWNLOAD_WEEKLY_REPORT = async (req, res) =>{
         status:"Success",
         statusCode:200,
         response:{
-           message:"An error occurred while downloading weekly report",
+           message:"Success",
         }
      })
        
