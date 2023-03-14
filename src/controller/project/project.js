@@ -1064,9 +1064,14 @@ const DOWNLOAD_WEEKLY_REPORT = async (req, res) =>{
        const filePath = path.join(os.homedir(), 'Downloads', 'weekly_salary.csv');
        res.setHeader('Content-Type', 'text/csv');
        res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
-       csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
-         res.download(filePath);
-       });
+       csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath))
+       res.send({
+        status:"Success",
+        statusCode:200,
+        response:{
+           message:"An error occurred while downloading weekly report",
+        }
+     })
        
     } catch (error) {
        console.error(error)
