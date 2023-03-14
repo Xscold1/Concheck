@@ -468,8 +468,8 @@ const DOWNLOAD_DTR_FAST = async (req, res) => {
 
         // Use fast-csv to generate the CSV file and send it in the response
         const filePath = path.join(os.homedir(), 'Downloads', `${crewId}-dtr.csv`);
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+        // res.setHeader('Content-Type', 'text/csv');
+        // res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
         csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
             res.download(filePath);
           });
