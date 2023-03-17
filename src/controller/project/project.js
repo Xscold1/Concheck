@@ -4,9 +4,7 @@ const conn = mongoose.connection;
 const bcrypt = require('bcrypt');
 const csv = require('fast-csv');
 const {format, parse, parseISO, isBefore, isAfter, isEqual, startOfWeek, endOfWeek } = require('date-fns');
-const path = require('path');
-const os = require('os');
-const fs = require('fs');
+const concat = require('concat-stream');
 
 //models
 const Project = require('../../models/project');
@@ -1061,11 +1059,20 @@ const DOWNLOAD_WEEKLY_REPORT = async (req, res) =>{
        }
  
        // Use the fast-csv package to generate the CSV file and send it in the response
-       const filePath = path.join(os.homedir(), 'Downloads', 'weekly_salary.csv');
-       res.setHeader('Content-Type', 'text/csv');
-       res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
-       csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
-        res.download(filePath);
+       const csvData = await new Promise((resolve, reject) => {
+        csv.write(rows, { headers: headers }).pipe(concat((data) => {
+          resolve(data.toString());
+        })).on('error', (error) => {
+          reject(error);
+        });
+      });
+  
+      return res.send({
+        status: "SUCCESS",
+        statusCode: 200,
+        response: {
+          data: csvData
+        }
       });
        
     } catch (error) {
@@ -1105,11 +1112,20 @@ const DOWNLOAD_SUMMARY = async (req, res)=>{
         }
   
         // Use the fast-csv package to generate the CSV file and send it in the response
-        const filePath = path.join(os.homedir(), 'Downloads', `${projectId}-summary.csv`);
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
-        csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
-            res.download(filePath);
+        const csvData = await new Promise((resolve, reject) => {
+            csv.write(rows, { headers: headers }).pipe(concat((data) => {
+              resolve(data.toString());
+            })).on('error', (error) => {
+              reject(error);
+            });
+          });
+      
+          return res.send({
+            status: "SUCCESS",
+            statusCode: 200,
+            response: {
+              data: csvData
+            }
           });
         
      } catch (error) {

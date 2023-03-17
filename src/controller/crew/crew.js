@@ -5,7 +5,6 @@ const bcrypt = require('bcrypt');
 const csv = require('fast-csv');
 const {format, parse, differenceInHours, setHours} = require('date-fns');
 const _ = require('lodash');
-const fs = require('fs');
 const concat = require('concat-stream');
 // const fastcsv = require('fast-csv'); // Import fast-csv module
 
@@ -499,7 +498,7 @@ const DOWNLOAD_DTR_FAST = async (req, res) => {
   
       data.push({ totalSalary: totalSalary });
   
-      //const fileName = `${findCrew.firstName}-${findCrew.lastName}-dtr.csv`;
+      const fileName = `${findCrew.firstName}-${findCrew.lastName}-dtr.csv`;
       const headers = [
         "time in",
         "time out",
@@ -532,16 +531,6 @@ const DOWNLOAD_DTR_FAST = async (req, res) => {
           reject(error);
         });
       });
-
-      console.log(csvData)
-
-    //   const result = await cloudinary.uploader.upload(csvData, {
-    //     resource_type: "raw",
-    //     folder: "dtr",
-    //     public_id: fileName,
-    //     overwrite: true,
-    //     mimetype: "text/csv"
-    //   });
   
       return res.send({
         status: "SUCCESS",
