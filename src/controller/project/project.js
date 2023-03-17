@@ -1055,7 +1055,7 @@ const DOWNLOAD_WEEKLY_REPORT = async (req, res) =>{
           const weeklyHoursWork = crewDtr.reduce((total, dtr) => total + dtr.dailyHoursWork, 0);
           const weeklyUndertime = crewDtr.reduce((total, dtr) => total + dtr.dailyUnderTime, 0);
           const name = crew.firstName + ' ' + crew.lastName;
-          rows.push([name, weeklyHoursLate, weeklyOverTime, weeklySalary, weeklyHoursWork, weeklyUndertime]);
+          rows.push([name, weeklyHoursLate, weeklyOverTime, weeklyHoursWork, weeklyUndertime, weeklySalary]);
        }
  
        // Use the fast-csv package to generate the CSV file and send it in the response
@@ -1095,7 +1095,7 @@ const DOWNLOAD_SUMMARY = async (req, res)=>{
         const findCrew = await Crew.find({crewId: {$in: crewIds}}).exec()
         
         const rows = []; // Initialize an array to store the rows of the CSV file
-        const headers = ['name', 'weeklyHoursLate', 'weeklyOverTime', 'weeklyHoursWork', 'weeklyUndertime', 'weeklySalary',];
+        const headers = ['name', 'weeklyHoursLate', 'weeklyOverTime', ,'weeklyHoursWork', 'weeklyUndertime', 'weeklySalary',];
         // Define the headers of the CSV file
         
         // Iterate through the crew members and compute the required values
@@ -1108,7 +1108,7 @@ const DOWNLOAD_SUMMARY = async (req, res)=>{
            const weeklyHoursWork = crewDtr.reduce((total, dtr) => total + dtr.dailyHoursWork, 0);
            const weeklyUndertime = crewDtr.reduce((total, dtr) => total + dtr.dailyUnderTime, 0);
            const name = crew.firstName + ' ' + crew.lastName;
-           rows.push([name, weeklyHoursLate, weeklyOverTime, weeklySalary, weeklyHoursWork, weeklyUndertime]);
+           rows.push([name, weeklyHoursLate, weeklyOverTime,  weeklyHoursWork, weeklyUndertime, weeklySalary,]);
         }
   
         // Use the fast-csv package to generate the CSV file and send it in the response

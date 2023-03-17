@@ -425,66 +425,6 @@ const GET_DTR_BY_CREW_ID = async (req, res) => {
     }
 }
 
-// const DOWNLOAD_DTR_FAST = async (req, res) => {
-    
-//     try {
-//         const { crewId } = req.params;
-//         const findCrew = await Crew.findOne({ crewId }).exec(); // Find the specific crew member
-//         const data = await Dtr.find({ crewId }).exec(); // Find all Dtr records for the specified crewId
-//         let totalSalary = 0;
-
-//         console.log()
-        
-//         // Calculate the total salary for the crew member
-//         for (let i = 0; i < data.length; i++) {
-//             totalSalary += data[i].dailySalary;
-//         }
-        
-//         // Add the total salary to the data array
-//         data.push({totalSalary: totalSalary});
-
-//         const downloadsFolder = path.join(os.homedir(), 'Downloads');
-
-//         const fileName = `${findCrew.firstName}-${findCrew.lastName}-dtr.csv `
-//         const headers = ['time in', 'time out', 'date', 'day', 'remarks','dailySalary','totalSalary',];
-
-//         // Initialize an array to store the rows of the CSV file
-//         const rows = [];
-
-//         // Iterate through the Dtr records and add the data to the rows array
-//         for (let i = 0; i < data.length; i++) {
-//             const dtr = data[i];
-//             rows.push([
-//                 dtr.timeIn,
-//                 dtr.timeOut,
-//                 dtr.date,
-//                 dtr.dayToday,
-//                 dtr.remarks,
-//                 dtr.dailySalary,
-//                 dtr.totalSalary || totalSalary,
-//             ]);
-//         }
-
-//         // Use fast-csv to generate the CSV file and send it in the response
-//         const filePath = path.join(os.homedir(), 'Downloads', `${crewId}-dtr.csv`);
-//         res.setHeader('Content-Type', 'text/csv');
-//         res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
-//         csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
-//             res.download(filePath);
-//           });
-
-//     } catch (err) {
-//         console.error(err)
-//         res.send({
-//             status: "INTERNAL SERVER ERROR",
-//             statusCode:500,
-//             response:{
-//                 messsage: "An error occurred while downloading csv"
-//             }
-//         })
-//     }
-// }
-
 const DOWNLOAD_DTR_FAST = async (req, res) => {
     try {
       const { crewId } = req.params;
