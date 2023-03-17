@@ -1062,8 +1062,8 @@ const DOWNLOAD_WEEKLY_REPORT = async (req, res) =>{
  
        // Use the fast-csv package to generate the CSV file and send it in the response
        const filePath = path.join(os.homedir(), 'Downloads', 'weekly_salary.csv');
-    //    res.setHeader('Content-Type', 'text/csv');
-    //    res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+       res.setHeader('Content-Type', 'text/csv');
+       res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
        csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
         res.download(filePath);
       });
@@ -1105,12 +1105,12 @@ const DOWNLOAD_SUMMARY = async (req, res)=>{
         }
   
         // Use the fast-csv package to generate the CSV file and send it in the response
-        const filePath = path.join(os.homedir(), 'Downloads', 'project-summary.csv');
-        // res.setHeader('Content-Type', 'text/csv');
-        // res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+        const filePath = path.join(os.homedir(), 'Downloads', `${projectId}-summary.csv`);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
         csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
-          res.download(filePath);
-        });
+            res.download(filePath);
+          });
         
      } catch (error) {
         console.error(error)

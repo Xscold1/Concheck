@@ -6,9 +6,13 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const connectDb = require ('./src/Config/database');
 const bodyParser = require('body-parser');
+const path = require('path');
 
 // Connect to the database
 connectDb();
+
+app.use(express.static("public"));
+app.use("/public", express.static(path.join(__dirname, 'public')));
 
 //bodyParser.use(bodyParser.
 app.use(bodyParser.urlencoded({ extended:false }));

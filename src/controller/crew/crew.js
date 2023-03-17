@@ -6,8 +6,8 @@ const csv = require('fast-csv');
 const {format, parse, differenceInHours, setHours} = require('date-fns');
 const _ = require('lodash');
 const fs = require('fs');
-const path = require('path');
-const os = require('os');
+const concat = require('concat-stream');
+// const fastcsv = require('fast-csv'); // Import fast-csv module
 
 //models
 const Crew = require('../../models/crew')
@@ -247,30 +247,28 @@ const TIMEOUT = async (req, res) =>{
         let underTime = 0
         let dailySalary = 0
         //compute weekly salary based on hourly rate or daily rate
-        if (findCrew.hourlyRate) {
         const hourlyRate = findCrew.hourlyRate;
         dailySalary = hoursOfWork * hourlyRate;
 
-            //check if there is overtime
-            if (isOverTime) {
-                overTimeHours = differenceInHours(timeOutParse, endShiftParse)
-                overTimePay = (overTimeHours * hourlyRate);
-                dailySalary += overTimePay;
-            }
-                //compute late penalty
-            if (isLate) {
-                hoursLate = differenceInHours(timeInParse, startShiftParse)
-                let latePenalty = (hoursLate * hourlyRate)
-                dailySalary -= latePenalty;
-            }
+        //check if there is overtime
+        if (isOverTime) {
+            overTimeHours = differenceInHours(timeOutParse, endShiftParse)
+            overTimePay = (overTimeHours * hourlyRate);
+            dailySalary += overTimePay;
+        }
+            //compute late penalty
+        if (isLate) {
+            hoursLate = differenceInHours(timeInParse, startShiftParse)
+            let latePenalty = (hoursLate * hourlyRate)
+            dailySalary -= latePenalty;
+        }
 
-                //compute underpay penalty
-            if (isUnderpay) {
-                underTime = differenceInHours(timeOutParse, endShiftParse)
-                let underTimePenalty = (underTime * hourlyRate)
-                dailySalary -= underTimePenalty;
-            }
-        }  
+            //compute underpay penalty
+        if (isUnderpay) {
+            underTime = differenceInHours(timeOutParse, endShiftParse)
+            let underTimePenalty = (underTime * hourlyRate)
+            dailySalary -= underTimePenalty;
+        }
 
         if(hoursOfWork < 0 ){
             hoursOfWork = 0
@@ -428,63 +426,145 @@ const GET_DTR_BY_CREW_ID = async (req, res) => {
     }
 }
 
-const DOWNLOAD_DTR_FAST = async (req, res) => {
+// const DOWNLOAD_DTR_FAST = async (req, res) => {
     
+//     try {
+//         const { crewId } = req.params;
+//         const findCrew = await Crew.findOne({ crewId }).exec(); // Find the specific crew member
+//         const data = await Dtr.find({ crewId }).exec(); // Find all Dtr records for the specified crewId
+//         let totalSalary = 0;
+
+//         console.log()
+        
+//         // Calculate the total salary for the crew member
+//         for (let i = 0; i < data.length; i++) {
+//             totalSalary += data[i].dailySalary;
+//         }
+        
+//         // Add the total salary to the data array
+//         data.push({totalSalary: totalSalary});
+
+//         const downloadsFolder = path.join(os.homedir(), 'Downloads');
+
+//         const fileName = `${findCrew.firstName}-${findCrew.lastName}-dtr.csv `
+//         const headers = ['time in', 'time out', 'date', 'day', 'remarks','dailySalary','totalSalary',];
+
+//         // Initialize an array to store the rows of the CSV file
+//         const rows = [];
+
+//         // Iterate through the Dtr records and add the data to the rows array
+//         for (let i = 0; i < data.length; i++) {
+//             const dtr = data[i];
+//             rows.push([
+//                 dtr.timeIn,
+//                 dtr.timeOut,
+//                 dtr.date,
+//                 dtr.dayToday,
+//                 dtr.remarks,
+//                 dtr.dailySalary,
+//                 dtr.totalSalary || totalSalary,
+//             ]);
+//         }
+
+//         // Use fast-csv to generate the CSV file and send it in the response
+//         const filePath = path.join(os.homedir(), 'Downloads', `${crewId}-dtr.csv`);
+//         res.setHeader('Content-Type', 'text/csv');
+//         res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+//         csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
+//             res.download(filePath);
+//           });
+
+//     } catch (err) {
+//         console.error(err)
+//         res.send({
+//             status: "INTERNAL SERVER ERROR",
+//             statusCode:500,
+//             response:{
+//                 messsage: "An error occurred while downloading csv"
+//             }
+//         })
+//     }
+// }
+
+const DOWNLOAD_DTR_FAST = async (req, res) => {
     try {
-        const { crewId } = req.params;
-        const findCrew = await Crew.findOne({ crewId }).exec(); // Find the specific crew member
-        const data = await Dtr.find({ crewId }).exec(); // Find all Dtr records for the specified crewId
-        let totalSalary = 0;
-        
-        // Calculate the total salary for the crew member
-        for (let i = 0; i < data.length; i++) {
-            totalSalary += data[i].dailySalary;
+      const { crewId } = req.params;
+      const findCrew = await Crew.findOne({ crewId }).exec();
+      const data = await Dtr.find({ crewId }).exec();
+      let totalSalary = 0;
+  
+      for (let i = 0; i < data.length; i++) {
+        totalSalary += data[i].dailySalary;
+      }
+  
+      data.push({ totalSalary: totalSalary });
+  
+      //const fileName = `${findCrew.firstName}-${findCrew.lastName}-dtr.csv`;
+      const headers = [
+        "time in",
+        "time out",
+        "date",
+        "day",
+        "remarks",
+        "dailySalary",
+        "totalSalary",
+      ];
+  
+      const rows = [];
+  
+      for (let i = 0; i < data.length; i++) {
+        const dtr = data[i];
+        rows.push([
+          dtr.timeIn,
+          dtr.timeOut,
+          dtr.date,
+          dtr.dayToday,
+          dtr.remarks,
+          dtr.dailySalary,
+          dtr.totalSalary || totalSalary,
+        ]);
+      }
+  
+      const csvData = await new Promise((resolve, reject) => {
+        csv.write(rows, { headers: headers }).pipe(concat((data) => {
+          resolve(data.toString());
+        })).on('error', (error) => {
+          reject(error);
+        });
+      });
+
+      console.log(csvData)
+
+    //   const result = await cloudinary.uploader.upload(csvData, {
+    //     resource_type: "raw",
+    //     folder: "dtr",
+    //     public_id: fileName,
+    //     overwrite: true,
+    //     mimetype: "text/csv"
+    //   });
+  
+      return res.send({
+        status: "SUCCESS",
+        statusCode: 200,
+        response: {
+          data: csvData
         }
-        
-        // Add the total salary to the data array
-        data.push({totalSalary: totalSalary});
-
-        const downloadsFolder = path.join(os.homedir(), 'Downloads');
-
-        const fileName = `${findCrew.firstName}-${findCrew.lastName}-dtr.csv `
-        const headers = ['name', 'time in', 'time out', 'date', 'day', 'remarks','dailySalary','totalSalary',];
-
-        // Initialize an array to store the rows of the CSV file
-        const rows = [];
-
-        // Iterate through the Dtr records and add the data to the rows array
-        for (let i = 0; i < data.length; i++) {
-            const dtr = data[i];
-            rows.push([
-                dtr.timeIn,
-                dtr.timeOut,
-                dtr.date,
-                dtr.dayToday,
-                dtr.remarks,
-                dtr.dailySalary,
-                dtr.totalSalary || totalSalary,
-            ]);
-        }
-
-        // Use fast-csv to generate the CSV file and send it in the response
-        const filePath = path.join(os.homedir(), 'Downloads', `${crewId}-dtr.csv`);
-        // res.setHeader('Content-Type', 'text/csv');
-        // res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
-        csv.write(rows, { headers: headers }).pipe(fs.createWriteStream(filePath)).on('finish', () => {
-            res.download(filePath);
-          });
+      });
 
     } catch (err) {
-        console.error(err)
-        res.send({
-            status: "INTERNAL SERVER ERROR",
-            statusCode:500,
-            response:{
-                messsage: "An error occurred while downloading csv"
-            }
-        })
+      console.error(err);
+      res.send({
+        status: "INTERNAL SERVER ERROR",
+        statusCode: 500,
+        response: {
+          messsage: "An error occurred while uploading csv"
+        }
+      });
     }
-}
+  };
+  
+  
+
 
 
 
