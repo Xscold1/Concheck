@@ -111,9 +111,25 @@ const TIMEIN = async (req, res) =>{
         
         const timeIn = format(newDate, 'HH:mm');
 
+        
+        const timeFormat = 'HH:mm';
+
         const existingDtr = await Dtr.findOne({crewId: crewId, date: date})
 
         const findCrew = await Crew.findOne({crewId: crewId})
+
+        const timeInParse = parse(timeIn, timeFormat, new Date());
+        const endShiftParse = parse(findCrew.endShift, timeFormat, new Date());
+
+        if(timeInParse > endShiftParse){
+            return res.send({
+                status:"FAILED",
+                statusCode: 400,
+                response:{
+                    message:"Too late to time in"
+                }
+            })
+        }
 
         if(!findCrew || findCrew === undefined || findCrew===null){
             return res.json({status: 'FAILED', statusCode: 400, message: "Crew does not exist"});
@@ -257,14 +273,14 @@ const TIMEOUT = async (req, res) =>{
         }
             //compute late penalty
         if (isLate) {
-            hoursLate = differenceInHours(timeInParse, startShiftParse)
+            hoursLate = Math.abs(differenceInHours(timeInParse, startShiftParse))
             let latePenalty = (hoursLate * hourlyRate)
             dailySalary -= latePenalty;
         }
 
             //compute underpay penalty
         if (isUnderpay) {
-            underTime = differenceInHours(timeOutParse, endShiftParse)
+            underTime = Math.abs(differenceInHours(timeOutParse, endShiftParse))
             let underTimePenalty = (underTime * hourlyRate)
             dailySalary -= underTimePenalty;
         }
@@ -273,11 +289,7 @@ const TIMEOUT = async (req, res) =>{
             hoursOfWork = 0
         }
 
-        let remarks = ""
-
-        if(hoursOfWork !== 0){
-            remarks = "Present"
-        }
+        let remarks = "Present"
 
         if(isLate) {
             remarks = "Late"
@@ -428,17 +440,12 @@ const GET_DTR_BY_CREW_ID = async (req, res) => {
 const DOWNLOAD_DTR_FAST = async (req, res) => {
     try {
       const { crewId } = req.params;
-      const findCrew = await Crew.findOne({ crewId }).exec();
       const data = await Dtr.find({ crewId }).exec();
       let totalSalary = 0;
   
       for (let i = 0; i < data.length; i++) {
         totalSalary += data[i].dailySalary;
       }
-  
-      data.push({ totalSalary: totalSalary });
-  
-      const fileName = `${findCrew.firstName}-${findCrew.lastName}-dtr.csv`;
       const headers = [
         "time in",
         "time out",
@@ -460,7 +467,7 @@ const DOWNLOAD_DTR_FAST = async (req, res) => {
           dtr.dayToday,
           dtr.remarks,
           dtr.dailySalary,
-          dtr.totalSalary || totalSalary,
+          totalSalary,
         ]);
       }
   
