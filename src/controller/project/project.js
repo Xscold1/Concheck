@@ -306,7 +306,7 @@ const UPLOAD_IMAGE = async (req,res)=>{
         // Iterate over the uploaded images and captions
         for (let i = 0; i < images.length; i++) {
             const image = images[i];
-            const caption = captions[i];
+            const caption = images.length === 1 ? captions : captions[i];
             // Upload the image to Cloudinary
 
             const result = await cloudinary.uploader.upload(image.path)
