@@ -2,6 +2,13 @@
 //import
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
+const fs = require('fs');
+const path = require('path');
+const templatePath = path.join(__dirname, 'templates.xlsx');
+const {google} = require('googleapis');
+const ExcelJS = require('exceljs');
+const keyPath = path.join(__dirname, '../../../keys.json');
+const xlsx = require('xlsx');
 //const status = require('../constant/statusCode');
 
 //models
@@ -9,10 +16,12 @@ const User = require('../../models/user');
 const Engineer = require('../../models/engineer');
 const Project = require('../../models/project');
 
+
 //utils
 const cloudinary = require('../../utils/cloudinary');
+const googleAuth = require('../../utils/googleAuth');
 const { projectDetailsSchema } = require('../../validations/userSchema');
-
+const sheets = google.sheets({version: 'v4', googleAuth});
 
 const CREATE_PROJECT = async (req, res) => {
     try {
@@ -64,12 +73,56 @@ const CREATE_PROJECT = async (req, res) => {
                 }
             })
         }
+        const client = new google.auth.GoogleAuth({
+            keyFile:keyPath,
+            scope: ['https://www.googleapis.com/auth/spreadsheets'],
+        })
 
-        const createProject = await Project.create({
+        const spreadsheetName = 'spreadsheet1';
+        const file = xlsx.readFile(templatePath);
+
+        // Get the first worksheet in the workbook
+        const sheetName = file.SheetNames[0];
+        const worksheet = file.Sheets[sheetName];
+
+        // Convert the worksheet data to an array of rows
+        const rows = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+
+        const request = {
+            resource: {
+                properties: {
+                title: spreadsheetName,
+                },
+            },
+            auth:client,
+        };
+
+        // Create the new sheet
+        const response = await sheets.spreadsheets.create(request);
+        const spreadsheetId = response.data.spreadsheetId;
+
+        // Update the first sheet with the data from the xlsx file
+        const range = 'Sheet1!A1';
+        const values = rows;
+        const updateRequest = {
+            spreadsheetId,
+            range,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values,
+            },
+            auth:client,
+        };
+
+        const updateResponse = await sheets.spreadsheets.values.update(updateRequest);
+        const updatedRange = updateResponse.data.updatedRange;;
+
+        await Project.create({
             ...createProjectInfo,
             companyId: findEngineerIfExist.companyId,
             engineerId: findEngineerIfExist.engineerId,
-            imageUrl: uploadImage.url
+            imageUrl: uploadImage.url,
+            // spreadsheetId: res.data.spreadsheetId
         })
 
         res.send({

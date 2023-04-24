@@ -53,6 +53,10 @@ const projectSchema = new Schema({
     companyId:{
         type:Number,
         required:true,
+    },
+    spreadsheetId:{
+        type:String,
+        required:true,
     }
 })
 
