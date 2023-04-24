@@ -56,7 +56,6 @@ const projectSchema = new Schema({
     },
     spreadsheetId:{
         type:String,
-        required:true,
     }
 })
 

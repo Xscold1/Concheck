@@ -1,10 +1,11 @@
 const {google} = require('googleapis');
 
-const keyPath = require ('../../keys.json');
-const auth = new google.auth.GoogleAuth({
-    keyFile: keyPath,
-    scopes: [
-      'https://www.googleapis.com/auth/spreadsheets',
-    ],
-  });
-module.exports = auth 
+const keys = require ('../../keys.json');
+const client = new google.auth.JWT(
+  keys.client_email,
+  null,
+  keys.private_key,
+  ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
+);
+
+module.exports = client
