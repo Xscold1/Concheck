@@ -2,6 +2,8 @@
 //import
 const mongoose = require('mongoose');
 const conn = mongoose.connection;
+const path = require('path');
+const {google} = require('googleapis');
 //const status = require('../constant/statusCode');
 
 //models
@@ -9,8 +11,10 @@ const User = require('../../models/user');
 const Engineer = require('../../models/engineer');
 const Project = require('../../models/project');
 
+
 //utils
 const cloudinary = require('../../utils/cloudinary');
+const googleAuth = require('../../utils/googleAuth');
 const { projectDetailsSchema } = require('../../validations/userSchema');
 
 
@@ -54,6 +58,7 @@ const CREATE_PROJECT = async (req, res) => {
         }
         
         const findEngineerIfExist = await Engineer.findOne({engineerId: engineerId})
+        const findEngineerUser = await User.findOne({userId:findEngineerIfExist.userId})
 
         if(!findEngineerIfExist || findEngineerIfExist === undefined || findEngineerIfExist === []){
             return res.send({
@@ -64,13 +69,39 @@ const CREATE_PROJECT = async (req, res) => {
                 }
             })
         }
-
-        const createProject = await Project.create({
+        const spreadsheetName = 'spreadsheet1';
+        const request = {
+            resource: {
+                properties: {
+                    title: spreadsheetName,
+                },
+            },
+            auth:googleAuth,
+        };
+        const sheets = google.sheets({version: 'v4', auth: googleAuth});
+        
+        const response = await sheets.spreadsheets.create(request);
+        const spreadsheetId = response.data.spreadsheetId;
+        console.log(spreadsheetId);
+        
+        await Project.create({
             ...createProjectInfo,
             companyId: findEngineerIfExist.companyId,
             engineerId: findEngineerIfExist.engineerId,
-            imageUrl: uploadImage.url
+            imageUrl: uploadImage.url,
+            spreadsheetId: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit#gid=166398060`
         })
+
+        const drive = google.drive({ version: "v3", auth: googleAuth });
+        await drive.permissions.create({
+        resource: {
+            type: "user",
+            role: "writer",
+            emailAddress: findEngineerUser.email,  // Please set the email address you want to give the permission.
+        },
+            fileId: spreadsheetId,
+            fields: "id",
+        });
 
         res.send({
             status:"SUCCESS",
